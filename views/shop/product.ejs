@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= product.name %> - <%= shopName %></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="background">
+        <div class="bg-grid"></div>
+        <div class="bg-glow"></div>
+        <div class="bg-glow"></div>
+    </div>
+
+    <header>
+        <a href="/shop/<%= client.shopSlug %>" class="logo"><span><%= shopName %></span></a>
+        <a href="/shop/<%= client.shopSlug %>" class="dashboard-button btn-secondary">
+            <i class="fas fa-arrow-left"></i> Zurück zum Shop
+        </a>
+    </header>
+
+    <main>
+        <div class="card">
+            <div class="card-header">
+                <h1><%= product.name %></h1>
+                <div class="subtitle">Bestelle jetzt und erhalte sofortigen Zugang</div>
+            </div>
+            
+            <div class="card-body">
+                <div class="product-detail-box">
+                    <div class="product-description-new">
+                        <i class="fas fa-info-circle"></i>
+                        <span><%= product.description %></span>
+                    </div>
+                    <div class="product-detail-meta">
+                        <div class="product-detail-price">
+                            <i class="fas fa-tag"></i>
+                            <span id="productPrice">€<%= product.price.toFixed(2) %></span>
+                        </div>
+                        <% if (typeof stock !== 'undefined') { %>
+                            <% if (stock > 0) { %>
+                                <span class="badge-success"><i class="fas fa-box"></i> Verfügbar</span>
+                            <% } else { %>
+                                <span class="badge-danger"><i class="fas fa-box-open"></i> Ausverkauft</span>
+                            <% } %>
+                        <% } %>
+                    </div>
+                    <div class="coupon-row" style="margin-top:1.2rem;display:flex;gap:0.7rem;align-items:center;">
+                        <input type="text" id="couponCode" class="form-control" placeholder="Gutscheincode" style="max-width:180px;">
+                        <button class="btn" type="button" onclick="checkCoupon()">Einlösen</button>
+                        <span id="couponMessage" style="margin-left:0.7rem;font-size:0.98em;"></span>
+                    </div>
+                    <div id="discountRow" style="display:none;margin-top:0.7rem;font-size:1.08em;color:#22c55e;">
+                        <span>Rabatt:</span> <span id="discountAmount"></span>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <% if (client.config.paypalLink) { %>
+                        <button onclick="createOrder('paypal')" class="btn" <%= stock === 0 ? 'disabled style="opacity:0.6;cursor:not-allowed;background:#888;color:#fff;"' : '' %>>
+                            <i class="fab fa-paypal"></i> Mit PayPal bezahlen
+                        </button>
+                    <% } %>
+                    
+                    <% if (client.config.nowPaymentsKey) { %>
+                        <button onclick="createOrder('crypto')" class="btn" <%= stock === 0 ? 'disabled style="opacity:0.6;cursor:not-allowed;background:#888;color:#fff;"' : '' %>>
+                            <i class="fab fa-bitcoin"></i> Mit Krypto bezahlen
+                        </button>
+                    <% } %>
+                </div>
+                
+                <div id="paymentInfo" style="display: none; margin-top: 2rem; background-color: rgba(31, 41, 55, 0.7); border-radius: var(--radius); padding: 1.5rem; border: 1px solid var(--border-color);">
+                    <h3 style="margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600;">Zahlungsinformationen</h3>
+                    <div id="paymentDetails"></div>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <p class="help-text">
+                    Probleme bei der Bestellung? <a href="#" class="help-link"><i class="fas fa-life-ring"></i> Kontaktiere uns</a>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <style>
+    .product-detail-box {
+        background: rgba(31, 41, 55, 0.7);
+        border-radius: 16px;
+        padding: 2rem 1.5rem 1.5rem 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+    .product-description-new {
+        font-size: 1.15rem;
+        color: #fff;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        margin-bottom: 0.7rem;
+    }
+    .product-description-new i {
+        color: var(--primary-color);
+        font-size: 1.4rem;
+        margin-top: 0.1rem;
+    }
+    .product-detail-meta {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        font-size: 1.1rem;
+    }
+    .product-detail-price {
+        color: #38bdf8;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.25rem;
+    }
+    .badge-success {
+        background: #22c55e22;
+        color: #22c55e;
+        padding: 0.2em 0.7em;
+        border-radius: 8px;
+        font-size: 1em;
+        font-weight: 600;
+    }
+    .badge-danger {
+        background: #ef444422;
+        color: #ef4444;
+        padding: 0.2em 0.7em;
+        border-radius: 8px;
+        font-size: 1em;
+        font-weight: 600;
+    }
+    </style>
+
+    <script>
+        async function createOrder(paymentMethod) {
+            const userEmail = document.getElementById('userEmail').value || 'anonymous';
+            
+            try {
+                const response = await fetch('/shop/<%= client.shopSlug %>/order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        productId: '<%= product._id %>',
+                        userId: userEmail,
+                        paymentMethod
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.paymentInfo) {
+                    const paymentDiv = document.getElementById('paymentInfo');
+                    const detailsDiv = document.getElementById('paymentDetails');
+                    
+                    paymentDiv.style.display = 'block';
+                    
+                    if (data.paymentInfo.type === 'paypal') {
+                        detailsDiv.innerHTML = `
+                            <p style="margin-bottom: 1rem;">Bestellnummer: <code>${data.orderId}</code></p>
+                            <p style="margin-bottom: 1.5rem;">${data.paymentInfo.instructions}</p>
+                            <a href="${data.paymentInfo.url}" target="_blank" class="btn">
+                                <i class="fab fa-paypal"></i> Zu PayPal gehen
+                            </a>
+                            <button id="paypalSentBtn" class="btn" style="margin-left:1rem; background:#22c55e; color:#fff;">
+                                <i class='fas fa-check'></i> Geld gesendet
+                            </button>
+                            <div id="paypalSentLoading" style="display:none; margin-top:1rem; color:#6366f1; font-weight:600;">
+                                <i class='fas fa-spinner fa-spin'></i> Wir prüfen deinen Zahlungseingang ...
+                            </div>
+                        `;
+                        document.getElementById('paypalSentBtn').onclick = async function() {
+                            this.disabled = true;
+                            document.getElementById('paypalSentLoading').style.display = 'block';
+                            try {
+                                await fetch(`/shop/<%= client.shopSlug %>/order/${data.orderId}/paypal-sent`, { method: 'POST' });
+                            } catch (e) {}
+                        };
+                        showNotification('PayPal', 'Du wirst zu PayPal weitergeleitet', 'info');
+                    } else if (data.paymentInfo.type === 'crypto') {
+                        detailsDiv.innerHTML = `
+                            <p style="margin-bottom: 1.5rem;">Du wirst zur Zahlungsseite weitergeleitet...</p>
+                        `;
+                        
+                        showNotification('Krypto-Zahlung', 'Du wirst zur Zahlungsseite weitergeleitet', 'info');
+                        
+                        setTimeout(() => {
+                            window.location.href = data.paymentInfo.url;
+                        }, 2000);
+                    }
+                }
+            } catch (error) {
+                showNotification('Fehler', 'Bei der Bestellung ist ein Fehler aufgetreten. Bitte versuche es erneut.', 'error');
+            }
+        }
+        
+        async function createSubscription() {
+            const userEmail = document.getElementById('userEmail').value || 'anonymous';
+            const interval = document.getElementById('subscriptionInterval').value;
+            try {
+                const response = await fetch('/shop/<%= client.shopSlug %>/stripe-subscription', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId: '<%= product._id %>', interval })
+                });
+                const data = await response.json();
+                if (data.url) {
+                    window.location.href = data.url;
+                } else {
+                    showNotification('Fehler', data.error || 'Abo-Checkout nicht möglich.', 'error');
+                }
+            } catch (e) {
+                showNotification('Fehler', 'Abo-Checkout Fehler.', 'error');
+            }
+        }
+        
+        // Notification system
+        function showNotification(title, message, type = 'info') {
+            // Remove any existing notifications
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                document.body.removeChild(existingNotification);
+            }
+            
+            // Create new notification
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            // Icon based on notification type
+            let icon = 'fa-info-circle';
+            if (type === 'success') icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-exclamation-circle';
+            
+            notification.innerHTML = `
+                <div class="notification-icon">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${title}</div>
+                    <div class="notification-message">${message}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        let discount = 0;
+        const originalPrice = <%= product.price %>;
+        function checkCoupon() {
+            const code = document.getElementById('couponCode').value;
+            const orderTotal = originalPrice;
+            fetch('/api/coupon/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, orderTotal })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const msg = document.getElementById('couponMessage');
+                if (data.valid) {
+                    discount = data.discount;
+                    document.getElementById('discountRow').style.display = '';
+                    document.getElementById('discountAmount').textContent = '-€' + discount.toFixed(2);
+                    msg.textContent = data.message;
+                    msg.style.color = '#22c55e';
+                    // Preis im UI anpassen
+                    document.getElementById('productPrice').textContent = '€' + (originalPrice - discount).toFixed(2);
+                } else {
+                    discount = 0;
+                    document.getElementById('discountRow').style.display = 'none';
+                    msg.textContent = data.message;
+                    msg.style.color = '#ef4444';
+                    document.getElementById('productPrice').textContent = '€' + originalPrice.toFixed(2);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

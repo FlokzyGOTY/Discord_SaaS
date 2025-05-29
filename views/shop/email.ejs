@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Dein Shop – Benachrichtigung</title>
+  <style>
+    body {
+      background: #181f2a;
+      color: #fff;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 2rem auto;
+      background: rgba(17,25,40,0.92);
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(99,102,241,0.10);
+      padding: 2rem 2.5rem;
+    }
+    .email-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .email-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #a5b4fc;
+      margin-bottom: 0.5rem;
+    }
+    .email-content {
+      font-size: 1.08rem;
+      color: #fff;
+      margin-bottom: 2rem;
+    }
+    .classic-card {
+      background: rgba(31,41,55,0.97);
+      border-radius: 14px;
+      padding: 1.1rem 1.2rem;
+      margin-bottom: 1.1rem;
+      border: 1.5px solid #6366f1;
+      box-shadow: 0 2px 12px rgba(99,102,241,0.10);
+    }
+    .footer {
+      text-align: center;
+      color: #aaa;
+      font-size: 0.95rem;
+      margin-top: 2rem;
+    }
+    .btn {
+      display: inline-block;
+      background: linear-gradient(90deg, #6366f1, #60a5fa 90%);
+      color: #fff;
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      margin-top: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="email-header">
+      <div class="email-title">Danke für deine Bestellung!</div>
+    </div>
+    <div class="email-content">
+      Hallo <b><%= username %></b>,<br>
+      vielen Dank für deinen Einkauf in unserem Shop.<br>
+      Hier sind deine Bestelldetails:
+    </div>
+    <div class="classic-card">
+      <b>Produkt:</b> <%= productName %><br>
+      <b>Lizenz/Key:</b> <%= licenseKey %><br>
+      <b>Bestelldatum:</b> <%= orderDate %>
+    </div>
+    <a href="<%= shopUrl %>" class="btn">Zum Shop</a>
+    <div class="footer">
+      &copy; <%= year %> Dein Shop – Vielen Dank für dein Vertrauen!
+    </div>
+  </div>
+</body>
+</html> 

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Wallet - <%= guild.name %></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <a href="/dashboard/guild/<%= guild.id %>" class="logo"><span>OrderBot</span></a>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <a href="/dashboard" class="dashboard-button btn-secondary">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+            <a href="/auth/logout" class="dashboard-button">
+                <i class="fas fa-sign-out-alt"></i> Abmelden
+            </a>
+        </div>
+    </header>
+    <main>
+        <div class="wallet-container">
+            <h1><i class="fas fa-wallet"></i> Admin Crypto Wallet</h1>
+            <div class="wallet-balances">
+                <div class="wallet-balance-card">
+                    <i class="fa-brands fa-bitcoin"></i>
+                    <div class="balance-value"><%= balances.bitcoin %> BTC</div>
+                    <div class="wallet-label">Bitcoin</div>
+                </div>
+                <div class="wallet-balance-card">
+                    <i class="fa-brands fa-ethereum"></i>
+                    <div class="balance-value"><%= balances.ethereum %> ETH</div>
+                    <div class="wallet-label">Ethereum</div>
+                </div>
+                <div class="wallet-balance-card">
+                    <i class="fa-solid fa-circle"></i>
+                    <div class="balance-value"><%= balances.solana %> SOL</div>
+                    <div class="wallet-label">Solana</div>
+                </div>
+                <div class="wallet-balance-card">
+                    <i class="fa-brands fa-litecoin-sign"></i>
+                    <div class="balance-value"><%= balances.litecoin %> LTC</div>
+                    <div class="wallet-label">Litecoin</div>
+                </div>
+            </div>
+            <div class="wallet-addresses-section">
+                <h2>Wallet Adressen</h2>
+                <div class="wallet-addresses">
+                    <div class="wallet-item">
+                        <span class="currency"><i class="fa-brands fa-bitcoin"></i> Bitcoin</span>
+                        <div class="address-container">
+                            <input type="text" class="wallet-address" value="<%= config.btcAddress || 'Noch keine Adresse hinterlegt' %>" readonly>
+                            <button onclick="copyAddress(this)" class="copy-btn"><i class="fas fa-copy"></i></button>
+                        </div>
+                    </div>
+                    <div class="wallet-item">
+                        <span class="currency"><i class="fa-brands fa-ethereum"></i> Ethereum</span>
+                        <div class="address-container">
+                            <input type="text" class="wallet-address" value="<%= config.ethAddress || 'Noch keine Adresse hinterlegt' %>" readonly>
+                            <button onclick="copyAddress(this)" class="copy-btn"><i class="fas fa-copy"></i></button>
+                        </div>
+                    </div>
+                    <div class="wallet-item">
+                        <span class="currency"><i class="fa-solid fa-circle"></i> Solana</span>
+                        <div class="address-container">
+                            <input type="text" class="wallet-address" value="<%= config.solAddress || 'Noch keine Adresse hinterlegt' %>" readonly>
+                            <button onclick="copyAddress(this)" class="copy-btn"><i class="fas fa-copy"></i></button>
+                        </div>
+                    </div>
+                    <div class="wallet-item">
+                        <span class="currency"><i class="fa-brands fa-litecoin-sign"></i> Litecoin</span>
+                        <div class="address-container">
+                            <input type="text" class="wallet-address" value="<%= config.ltcAddress || 'Noch keine Adresse hinterlegt' %>" readonly>
+                            <button onclick="copyAddress(this)" class="copy-btn"><i class="fas fa-copy"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="editWalletAddresses()" class="edit-wallet-btn">
+                    <i class="fas fa-edit"></i> Adressen bearbeiten
+                </button>
+            </div>
+        </div>
+    </main>
+    <style>
+        body { background: #0a0c18; color: #fff; font-family: 'Inter', sans-serif; }
+        .wallet-container { max-width: 700px; margin: 2rem auto; background: #181f2a; border-radius: 18px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); padding: 2.5rem 2rem 2rem 2rem; }
+        .wallet-balances { display: flex; gap: 2rem; justify-content: space-between; margin-bottom: 2.5rem; }
+        .wallet-balance-card { background: rgba(31, 41, 55, 0.5); border-radius: 12px; padding: 1.5rem 2rem; text-align: center; border: 1px solid var(--border-color, #6366f1); min-width: 140px; }
+        .wallet-balance-card i { font-size: 2.2rem; margin-bottom: 0.7rem; color: #ffe066; }
+        .balance-value { font-size: 1.3rem; font-weight: bold; margin-bottom: 0.3rem; font-family: monospace; }
+        .wallet-label { color: var(--text-secondary, #aaa); font-size: 1rem; }
+        .wallet-addresses-section { margin-top: 2.5rem; }
+        .wallet-addresses { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.8rem; }
+        .wallet-item { background: rgba(31, 41, 55, 0.5); border-radius: 8px; padding: 0.8rem; border: 1px solid var(--border-color); }
+        .wallet-item .currency { display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600; }
+        .address-container { display: flex; gap: 0.5rem; align-items: center; }
+        .wallet-address { flex: 1; background: rgba(17, 24, 39, 0.7); border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 6px; color: var(--text-primary); font-family: monospace; font-size: 0.9rem; }
+        .copy-btn { background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: var(--primary-color); width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
+        .copy-btn:hover { background: var(--primary-color); color: white; }
+        .edit-wallet-btn { margin-top: 1.2rem; background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); color: white; border: none; padding: 0.7rem 1.5rem; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; font-size: 1.1rem; }
+        .edit-wallet-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); }
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10,12,24,0.85);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+        }
+        .modal {
+            background: #23283a;
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            padding: 2rem 2.5rem 1.5rem 2.5rem;
+            min-width: 340px;
+            max-width: 95vw;
+            position: relative;
+            animation: modalIn 0.2s;
+        }
+        @keyframes modalIn {
+            from { transform: translateY(40px) scale(0.98); opacity: 0; }
+            to { transform: none; opacity: 1; }
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.2rem;
+        }
+        .modal-header h2 { font-size: 1.3rem; margin: 0; }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .modal-close:hover { color: #fff; }
+        .modal-content .form-group {
+            margin-bottom: 1.1rem;
+        }
+        .modal-content label {
+            display: block;
+            margin-bottom: 0.3rem;
+            color: #b3b8c7;
+            font-weight: 600;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid #363b4e;
+            background: #181f2a;
+            color: #fff;
+            font-size: 1rem;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.7rem;
+            margin-top: 1.2rem;
+        }
+        .btn.btn-secondary {
+            background: #23283a;
+            color: #aaa;
+            border: 1px solid #363b4e;
+            padding: 0.5rem 1.2rem;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn.btn-secondary:hover { background: #181f2a; color: #fff; }
+        .btn.btn-primary {
+            background: linear-gradient(90deg, #6366f1, #a78bfa);
+            color: #fff;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn.btn-primary:hover { background: linear-gradient(90deg, #818cf8, #c4b5fd); }
+    </style>
+    <script>
+        function copyAddress(button) {
+            const input = button.parentElement.querySelector('.wallet-address');
+            input.select();
+            document.execCommand('copy');
+            // Visual feedback
+            const icon = button.querySelector('i');
+            const originalClass = icon.className;
+            icon.className = 'fas fa-check';
+            button.style.background = '#22c55e';
+            button.style.color = 'white';
+            setTimeout(() => {
+                icon.className = originalClass;
+                button.style.background = '';
+                button.style.color = '';
+            }, 1000);
+        }
+        function editWalletAddresses() {
+            // Create modal for editing
+            const modal = document.createElement('div');
+            modal.className = 'modal-backdrop';
+            modal.innerHTML = `
+                <div class="modal" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h2>Wallet Adressen bearbeiten</h2>
+                        <button class="modal-close" onclick="this.closest('.modal-backdrop').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-content">
+                        <div class="form-group">
+                            <label>Bitcoin Adresse</label>
+                            <input type="text" id="btcAddress" class="form-control" value="<%= config.btcAddress || '' %>">
+                        </div>
+                        <div class="form-group">
+                            <label>Ethereum Adresse</label>
+                            <input type="text" id="ethAddress" class="form-control" value="<%= config.ethAddress || '' %>">
+                        </div>
+                        <div class="form-group">
+                            <label>Solana Adresse</label>
+                            <input type="text" id="solAddress" class="form-control" value="<%= config.solAddress || '' %>">
+                        </div>
+                        <div class="form-group">
+                            <label>Litecoin Adresse</label>
+                            <input type="text" id="ltcAddress" class="form-control" value="<%= config.ltcAddress || '' %>">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-backdrop').remove()">Abbrechen</button>
+                        <button class="btn btn-primary" onclick="saveWalletAddresses(this)">Speichern</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+        async function saveWalletAddresses(button) {
+            const modal = button.closest('.modal-backdrop');
+            const data = {
+                btcAddress: document.getElementById('btcAddress').value,
+                ethAddress: document.getElementById('ethAddress').value,
+                solAddress: document.getElementById('solAddress').value,
+                ltcAddress: document.getElementById('ltcAddress').value
+            };
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Speichern...';
+                const response = await fetch('/dashboard/guild/<%= guild.id %>/config/wallet', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    showNotification('Erfolg', 'Wallet Adressen wurden gespeichert', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    throw new Error('Fehler beim Speichern');
+                }
+            } catch (error) {
+                showNotification('Fehler', 'Wallet Adressen konnten nicht gespeichert werden', 'error');
+                button.disabled = false;
+                button.innerHTML = 'Speichern';
+            }
+        }
+        function showNotification(title, message, type = 'info') {
+            // Remove any existing notifications
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                document.body.removeChild(existingNotification);
+            }
+            // Create new notification
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            // Icon based on notification type
+            let icon = 'fa-info-circle';
+            if (type === 'success') icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-exclamation-circle';
+            notification.innerHTML = `
+                <div class="notification-icon">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${title}</div>
+                    <div class="notification-message">${message}</div>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            // Animate in
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 

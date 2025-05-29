@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Discord SaaS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="background">
+        <div class="bg-grid"></div>
+        <div class="bg-glow"></div>
+        <div class="bg-glow"></div>
+    </div>
+
+    <header>
+        <a href="/" class="logo"><span>Discord SaaS</span></a>
+        <a href="/auth/logout" class="dashboard-button">
+            <i class="fas fa-sign-out-alt"></i> Abmelden
+        </a>
+    </header>
+
+    <main>
+        <div class="card wide">
+            <div class="card-header">
+                <h1>Deine Discord Server</h1>
+                <div class="subtitle">Wähle einen Server aus, um dessen Einstellungen zu verwalten</div>
+            </div>
+            
+            <div class="card-body">
+                <div class="server-grid">
+                    <% guilds.forEach(guild => { %>
+                        <div class="server-card">
+                            <div class="server-header">
+                                <div class="server-icon">
+                                    <% if (guild.icon) { %>
+                                        <img src="https://cdn.discordapp.com/icons/<%= guild.id %>/<%= guild.icon %>.png" alt="<%= guild.name %>">
+                                    <% } else { %>
+                                        <%= guild.name.charAt(0) %>
+                                    <% } %>
+                                </div>
+                                <div class="server-info">
+                                    <div class="server-name"><%= guild.name %></div>
+                                    <div class="server-id">ID: <%= guild.id %></div>
+                                </div>
+                            </div>
+                            
+                            <div class="server-body">
+                                <% if (guild.botIsIn) { %>
+                                    <span class="server-status status-active">
+                                        <i class="fas fa-check-circle"></i> Bot installiert
+                                    </span>
+                                    <p style="color: var(--text-secondary); margin-bottom: 0.5rem;"><i class="fas fa-users"></i> Server verwalten</p>
+                                    <p style="color: var(--text-secondary);"><i class="fas fa-shopping-cart"></i> Produkte einrichten</p>
+                                <% } else { %>
+                                    <span class="server-status status-inactive">
+                                        <i class="fas fa-times-circle"></i> Bot nicht installiert
+                                    </span>
+                                    <p style="color: var(--text-secondary); margin-top: 0.5rem;"><i class="fas fa-info-circle"></i> Installiere den Bot, um loszulegen</p>
+                                <% } %>
+                            </div>
+                            
+                            <div class="server-footer">
+                                <% if (guild.botIsIn) { %>
+                                    <a href="/dashboard/guild/<%= guild.id %>" class="btn">
+                                        <i class="fas fa-cog"></i> Verwalten
+                                    </a>
+                                <% } else { %>
+                                    <a href="<%= botInviteUrl %>&guild_id=<%= guild.id %>" class="btn btn-secondary" target="_blank">
+                                        <i class="fas fa-plus"></i> Bot installieren
+                                    </a>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <p class="help-text">
+                    Du siehst deinen Server nicht? <a href="#" class="help-link"><i class="fas fa-sync-alt"></i> Aktualisieren</a> oder <a href="#" class="help-link"><i class="fas fa-question-circle"></i> Hilfe erhalten</a>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Notification system
+        function showNotification(title, message, type = 'info') {
+            // Remove any existing notifications
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                document.body.removeChild(existingNotification);
+            }
+            
+            // Create new notification
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            // Icon based on notification type
+            let icon = 'fa-info-circle';
+            if (type === 'success') icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-exclamation-circle';
+            
+            notification.innerHTML = `
+                <div class="notification-icon">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${title}</div>
+                    <div class="notification-message">${message}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

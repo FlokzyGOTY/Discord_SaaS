@@ -1,0 +1,2028 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= shopName %></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .shop-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 3rem;
+        }
+        
+        .shop-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .shop-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 2px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .product-card {
+            background: rgba(17, 25, 40, 0.8);
+            border-radius: 16px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+
+        .product-banner-gradient-full {
+            width: 100%;
+            height: 110px;
+            border-radius: 16px 16px 0 0;
+            background: linear-gradient(120deg, var(--primary-color) 60%, #8b5cf6 100%);
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-start;
+            overflow: hidden;
+        }
+
+        .product-banner-content-full {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 1.2rem 1.1rem 1.2rem;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.18rem;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.13);
+        }
+
+        .product-card .product-name {
+            font-size: 1.13rem;
+            font-weight: 700;
+            background: none;
+            -webkit-text-fill-color: #fff;
+            margin-right: 0.5rem;
+        }
+
+        .product-card .product-price {
+            font-size: 1.18rem;
+            font-weight: 700;
+            color: #38bdf8;
+            background: none;
+            -webkit-text-fill-color: #38bdf8;
+        }
+
+        .product-image-container-full {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 90px;
+            margin-top: -35px;
+            margin-bottom: 0.5rem;
+            z-index: 2;
+            position: relative;
+        }
+
+        .product-image {
+            max-width: 90px;
+            max-height: 90px;
+            border-radius: 12px;
+            object-fit: contain;
+            background: #23272f;
+        }
+
+        .product-default-image {
+            font-size: 2.5rem;
+            color: rgba(255,255,255,0.18);
+            background: none;
+            border-radius: 12px;
+            padding: 1.2rem;
+        }
+
+        .product-content {
+            padding: 0 1.2rem 1.2rem 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .product-description.shop-product-description {
+            color: var(--text-secondary);
+            font-size: 0.98rem;
+            margin-bottom: 1.1rem;
+            min-height: 2.2em;
+            text-align: left;
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .buy-button {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 0.7rem 1.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.10);
+            text-decoration: none;
+        }
+
+        .buy-button:hover {
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            box-shadow: 0 4px 16px rgba(99,102,241,0.18);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(31, 41, 55, 0.7);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            opacity: 0.7;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .empty-state p {
+            color: var(--text-secondary);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1400px) {
+            .product-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .shop-container {
+                padding: 0 1.5rem;
+            }
+            
+            .product-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 1.5rem 2rem;
+            position: relative;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-actions {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .product-card:hover .product-actions {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .edit-button {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: var(--primary-color);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .edit-button:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-backdrop.show {
+            opacity: 1;
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+            z-index: 1001;
+            display: none;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(90deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 0.5rem;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+        }
+
+        .color-picker {
+            width: 100%;
+            height: 40px;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-secondary {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .classic-card {
+            background: rgba(23, 25, 40, 0.92);
+            border-radius: 22px;
+            border: 1.5px solid rgba(99, 102, 241, 0.13);
+            box-shadow: 0 8px 32px rgba(99,102,241,0.10), 0 2px 8px rgba(0,0,0,0.10);
+            transition: box-shadow 0.25s, transform 0.22s;
+            overflow: hidden;
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+        .product-banner-image {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(120deg, var(--primary-color) 60%, #8b5cf6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 22px 22px 0 0;
+            overflow: hidden;
+            margin-bottom: 0.7rem;
+        }
+        .product-banner-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 0;
+            background: #23272f;
+            box-shadow: 0 2px 12px #0002;
+        }
+        .product-banner-placeholder {
+            font-size: 3.2rem;
+            color: #a5b4fc33;
+            background: none;
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+        .product-content-classic {
+            padding: 0.7rem 1.3rem 1.2rem 1.3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.7rem;
+        }
+        .product-name-classic {
+            font-size: 1.18rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 0.1rem;
+            letter-spacing: 0.01em;
+            text-align: left;
+        }
+        .product-price-classic {
+            font-size: 1.18rem;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-bottom: 0.5rem;
+            text-align: left;
+        }
+        .badge-info {
+            background: linear-gradient(90deg, #6366f1, #60a5fa 90%);
+            color: #fff;
+            padding: 0.22em 0.8em;
+            border-radius: 10px;
+            font-size: 0.98em;
+            font-weight: 600;
+            box-shadow: 0 2px 8px #6366f133;
+            margin-bottom: 0.2rem;
+            display: inline-block;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 0.98em;
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 0.22em 0.8em;
+            margin-bottom: 0.2rem;
+        }
+        .product-footer-classic {
+            display: flex;
+            justify-content: flex-start;
+            align-items: stretch;
+            margin-top: 0.7rem;
+            gap: 0.7rem;
+        }
+        .btn.btn-primary {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 0.7rem 1.5rem;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.10);
+            text-decoration: none;
+        }
+        .btn.btn-primary:hover {
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            box-shadow: 0 4px 16px rgba(99,102,241,0.18);
+        }
+        .btn.btn-secondary {
+            background: #23272f;
+            color: #a5b4fc;
+            border: 1.5px solid var(--border-color, #6366f1);
+            border-radius: 10px;
+            padding: 0.7rem 1.5rem;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            text-decoration: none;
+        }
+        .btn.btn-secondary:hover {
+            background: #6366f1;
+            color: #fff;
+        }
+        .btn.btn-secondary, .btn.btn-primary {
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            padding: 0 1.5rem;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .btn.btn-secondary {
+            background: var(--input-bg, #23272f);
+            color: var(--text-secondary, #aaa);
+            border: 1.5px solid var(--border-color, #6366f1);
+        }
+        .btn.btn-secondary:hover {
+            background: #23272f;
+            color: var(--primary-color);
+        }
+        .btn.btn-primary {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.10);
+        }
+        .btn.btn-primary:hover {
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            box-shadow: 0 4px 16px rgba(99,102,241,0.18);
+        }
+        .cart-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            position: relative;
+            cursor: pointer;
+            margin-left: 1.5rem;
+            transition: color 0.2s;
+        }
+        .cart-btn:hover { color: var(--primary-color); }
+        .cart-count {
+            position: absolute;
+            top: -7px;
+            right: -10px;
+            background: var(--primary-color);
+            color: #fff;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border-radius: 50%;
+            padding: 2px 7px;
+            min-width: 22px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.18);
+        }
+        .cart-modal {
+            min-width: 340px;
+            max-width: 98vw;
+            width: 100%;
+            max-width: 600px;
+        }
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.1rem;
+            background: var(--input-bg, #23272f);
+            border-radius: 10px;
+            padding: 0.7rem 1rem;
+        }
+        .cart-item-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #23272f;
+        }
+        .cart-item-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .cart-item-name {
+            font-weight: 600;
+            color: #fff;
+            font-size: 1rem;
+        }
+        .cart-item-price {
+            color: #38bdf8;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .cart-item-qty {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-top: 0.2rem;
+        }
+        .cart-item-qty-btn {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: var(--primary-color);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.1rem;
+            outline: none;
+            box-shadow: none;
+            padding: 0;
+        }
+        .cart-item-qty-btn:hover {
+            background: var(--primary-color);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+        .cart-item-qty span {
+            min-width: 24px;
+            text-align: center;
+            font-size: 1.08rem;
+            font-weight: 600;
+            color: #fff;
+            background: none;
+            display: inline-block;
+        }
+        .cart-item-remove {
+            background: rgba(239,68,68,0.10);
+            border: 1px solid rgba(239,68,68,0.18);
+            color: #ef4444;
+            font-size: 1.18rem;
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: none;
+            padding: 0;
+        }
+        .cart-item-remove:hover {
+            background: #ef4444;
+            color: #fff;
+            border-color: #ef4444;
+            transform: translateY(-2px);
+        }
+        .payment-methods {
+            display: flex;
+            gap: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        .payment-method {
+            background: var(--input-bg, #23272f);
+            border: 1.5px solid var(--border-color, #6366f1);
+            border-radius: 8px;
+            padding: 0.7rem 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            cursor: pointer;
+            font-weight: 600;
+            color: #fff;
+            transition: border 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        .payment-method input[type="radio"] {
+            display: none;
+        }
+        .payment-method .icon {
+            font-size: 1.4rem;
+            color: var(--primary-color);
+            margin-right: 0.3rem;
+        }
+        .payment-method input[type="radio"]:checked + .icon,
+        .payment-method input[type="radio"]:checked ~ span {
+            color: var(--secondary-color);
+        }
+        .payment-method input[type="radio"]:checked ~ span {
+            font-weight: 700;
+        }
+        .payment-method input[type="radio"]:checked ~ .icon {
+            color: var(--secondary-color);
+        }
+        .payment-method:has(input[type="radio"]:checked) {
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 2px 12px rgba(99,102,241,0.13);
+        }
+        .crypto-coins {
+            display: flex;
+            gap: 1.2rem;
+        }
+        .crypto-coin {
+            background: var(--input-bg, #23272f);
+            border: 1.5px solid var(--border-color, #6366f1);
+            border-radius: 8px;
+            padding: 0.6rem 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            cursor: pointer;
+            font-weight: 600;
+            color: #fff;
+            transition: border 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        .crypto-coin input[type="radio"] {
+            display: none;
+        }
+        .crypto-coin .icon {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            margin-right: 0.2rem;
+        }
+        .crypto-coin input[type="radio"]:checked + .icon,
+        .crypto-coin input[type="radio"]:checked ~ span {
+            color: var(--secondary-color);
+        }
+        .crypto-coin input[type="radio"]:checked ~ span {
+            font-weight: 700;
+        }
+        .crypto-coin input[type="radio"]:checked ~ .icon {
+            color: var(--secondary-color);
+        }
+        .crypto-coin:has(input[type="radio"]:checked) {
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 2px 12px rgba(99,102,241,0.13);
+        }
+        #userArea {
+            display: flex;
+            align-items: center;
+            gap: 1.1rem;
+            position: relative;
+        }
+        #cartBtn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            position: relative;
+            cursor: pointer;
+            margin-left: 0;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 44px;
+            width: 44px;
+        }
+        #cartBtn:hover { color: var(--primary-color); }
+        #userAvatarBtn {
+            background: none;
+            border: none;
+            padding: 0;
+            margin-left: 0.5rem;
+            cursor: pointer;
+            border-radius: 50%;
+            outline: none;
+            box-shadow: none;
+            transition: box-shadow 0.18s, border 0.18s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 44px;
+            width: 44px;
+        }
+        #userAvatarBtn:focus, #userAvatarBtn:hover {
+            box-shadow: 0 0 0 3px #6366f1aa;
+            border: 2px solid #6366f1;
+        }
+        #userAvatarBtn img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #6366f1;
+            transition: box-shadow 0.18s, border 0.18s;
+        }
+        #profileDropdown {
+            display: none;
+            position: absolute;
+            top: 80px;
+            right: 0;
+            z-index: 2000;
+            min-width: 320px;
+            max-width: 98vw;
+            background: rgba(23, 25, 40, 0.98);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(99,102,241,0.18), 0 2px 8px rgba(0,0,0,0.18);
+            padding: 1.2rem 1.3rem 1.1rem 1.3rem;
+            animation: dropdownFadeIn 0.22s cubic-bezier(.4,1.3,.6,1) both;
+        }
+        @keyframes dropdownFadeIn {
+            from { opacity: 0; transform: translateY(-16px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @media (max-width: 600px) {
+            .profile-dropdown-box {
+                right: 0;
+                left: 0;
+                margin: 0 auto;
+                min-width: 90vw;
+                max-width: 98vw;
+            }
+            .profile-dropdown-box::before {
+                right: 24px;
+            }
+        }
+        .profile-dropdown-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+        }
+        .profile-dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: 1.1rem;
+            margin-bottom: 0.7rem;
+        }
+        .profile-dropdown-header img {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: 2.5px solid #6366f1;
+            object-fit: cover;
+            background: #23272f;
+        }
+        #profileName {
+            font-weight: 700;
+            color: #fff;
+            font-size: 1.18rem;
+        }
+        #profileId {
+            font-size: 0.97rem;
+            color: #aaa;
+        }
+        .profile-dropdown-actions {
+            display: flex;
+            gap: 0.7rem;
+            margin-bottom: 0.2rem;
+        }
+        .profile-dropdown-btn {
+            flex: 1;
+            background: #23272f;
+            color: #a5b4fc;
+            border: none;
+            border-radius: 8px;
+            padding: 0.7rem 0.5rem;
+            font-size: 1.01rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            justify-content: center;
+        }
+        .profile-dropdown-btn:hover {
+            background: #6366f1;
+            color: #fff;
+        }
+        .logout-btn {
+            background: #ef4444;
+            color: #fff;
+        }
+        .logout-btn:hover {
+            background: #b91c1c;
+        }
+        .license-card {
+            background: rgba(31,41,55,0.92);
+            border-radius: 13px;
+            box-shadow: 0 2px 12px rgba(99,102,241,0.10);
+            padding: 1.1rem 1.3rem 1.2rem 1.3rem;
+            margin-bottom: 1.2rem;
+            border: 1.5px solid var(--border-color, #6366f1);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .license-title {
+            font-weight: 700;
+            color: #a5b4fc;
+            font-size: 1.08rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .license-meta {
+            color: #aaa;
+            font-size: 0.97rem;
+        }
+        .license-status {
+            color: #38bdf8;
+            font-size: 0.97rem;
+        }
+        .license-value-row {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-top: 0.7rem;
+        }
+        .license-blur {
+            filter: blur(7px);
+            background: #23272f;
+            color: #38bdf8;
+            border-radius: 7px;
+            padding: 0.5rem 0.8rem;
+            font-family: monospace;
+            font-size: 1.08rem;
+            cursor: pointer;
+            user-select: none;
+            transition: filter 0.18s;
+        }
+        .license-blur.unblur {
+            filter: none;
+        }
+        .license-copy-btn {
+            border: none;
+            background: rgba(99,102,241,0.13);
+            color: var(--primary-color);
+            border-radius: 6px;
+            padding: 0.25rem 0.6rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s;
+        }
+        .license-copy-btn:hover {
+            background: var(--primary-color);
+            color: #fff;
+        }
+        .license-download {
+            display: inline-block;
+            margin-top: 0.7rem;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            padding: 0.7rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .license-download:hover {
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        }
+        .feedback-icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, #6366f1, #60a5fa 90%);
+            color: #fff;
+            font-size: 1.25rem;
+            margin-top: 2px;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.10);
+            transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+            border: none;
+            text-decoration: none;
+            position: relative;
+        }
+        .feedback-icon-btn:hover {
+            background: linear-gradient(90deg, #60a5fa, #6366f1 90%);
+            color: #ffe066;
+            box-shadow: 0 4px 16px rgba(99,102,241,0.18);
+        }
+        .feedback-icon-btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            left: 50%;
+            top: 110%;
+            transform: translateX(-50%);
+            background: #23272f;
+            color: #fff;
+            padding: 0.35rem 0.7rem;
+            border-radius: 6px;
+            font-size: 0.93rem;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+            z-index: 10;
+            pointer-events: none;
+        }
+        .feedback-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-weight: 600;
+            font-size: 1.05rem;
+            border-radius: 8px;
+            padding: 0.7rem 1.3rem;
+            background: linear-gradient(90deg, #6366f1, #60a5fa 90%);
+            color: #fff;
+            border: none;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.10);
+            transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+            text-decoration: none;
+        }
+        .feedback-btn:hover {
+            background: linear-gradient(90deg, #60a5fa, #6366f1 90%);
+            color: #ffe066;
+            box-shadow: 0 4px 16px rgba(99,102,241,0.18);
+        }
+        /* Wallet Modal Styles */
+        .wallet-modal {
+            max-width: 800px;
+        }
+        .wallet-content {
+            padding: 1rem 0;
+        }
+        .wallet-balance-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .wallet-card {
+            background: rgba(31, 41, 55, 0.5);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        .wallet-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 20px rgba(99,102,241,0.2);
+        }
+        .wallet-card i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .wallet-amount {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-family: monospace;
+        }
+        .wallet-label {
+            color: var(--text-secondary);
+        }
+        .wallet-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+        .wallet-transactions {
+            background: rgba(31, 41, 55, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        .wallet-transactions h3 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        .transaction-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        /* Add this to the existing userArea styles */
+        .wallet-btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .wallet-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="background">
+        <div class="bg-grid"></div>
+        <div class="bg-glow"></div>
+        <div class="bg-glow"></div>
+    </div>
+
+    <header>
+        <a href="/shop/<%= client.shopSlug %>" class="logo"><span><%= shopName %></span></a>
+        <div id="userArea" style="display:flex; align-items:center; margin-left:1.5rem; position:relative;">
+            <!-- Warenkorb-Button und Feedback-Button werden hier platziert -->
+        </div>
+    </header>
+
+    <main>
+        <div class="shop-container">
+            <div class="shop-header">
+                <h1><%= shopName %></h1>
+                <div class="subtitle">Entdecke unsere handverlesenen Produkte</div>
+                <div style="margin:2rem 0 0.5rem 0; display:flex; justify-content:center;">
+                    <input id="productSearchInput" type="text" class="form-control" style="max-width:340px;" placeholder="🔍 Produkt suchen..." oninput="filterProducts()">
+                </div>
+            </div>
+            
+            <% if (products.length > 0) { %>
+                <div class="product-grid">
+                    <% for (let i = 0; i < products.length; i++) { 
+                        const product = products[i]; %>
+                        <div class="product-card classic-card" data-product-id="<%= product._id %>">
+                            <div class="product-banner-image">
+                                <% if (product.imageUrl) { %>
+                                    <img src="<%= product.imageUrl %>" alt="<%= product.name %>" class="product-banner-img">
+                                <% } else { %>
+                                    <div class="product-banner-placeholder"><i class="fas fa-box"></i></div>
+                                <% } %>
+                            </div>
+                            <div class="product-content-classic">
+                                <div class="product-name-classic"><%= product.name %></div>
+                                <div class="product-price-classic">€<%= product.price.toFixed(2) %></div>
+                                <div style="margin-bottom: 0.5rem;">
+                                    <% if (product.stock > 0) { %>
+                                        <span class="badge" style="background: #22c55e22; color: #22c55e; padding: 0.2em 0.7em; border-radius: 8px; font-size: 0.98em; font-weight: 600;">
+                                            Noch <%= product.stock %> verfügbar
+                                        </span>
+                                    <% } else { %>
+                                        <span class="badge" style="background: #ef444422; color: #ef4444; padding: 0.2em 0.7em; border-radius: 8px; font-size: 0.98em; font-weight: 600;">
+                                            Ausverkauft
+                                        </span>
+                                    <% } %>
+                                </div>
+                                <div class="product-footer-classic" style="gap: 0.5rem;">
+                                    <a href="/shop/<%= client.shopSlug %>/product/<%= product._id %>" class="btn btn-secondary" style="flex:1; text-align:center;">Details</a>
+                                    <button
+                                        class="btn btn-primary add-to-cart-btn <%= product.stock === 0 ? 'disabled-btn' : '' %>"
+                                        style="flex:1; text-align:center;"
+                                        data-id="<%= product._id %>"
+                                        data-name="<%= product.name.replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;') %>"
+                                        data-price="<%= product.price %>"
+                                        data-image="<%= product.imageUrl ? product.imageUrl.replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;') : '' %>"
+                                        data-stock="<%= product.stock %>"
+                                        <%= product.stock === 0 ? 'disabled' : '' %>
+                                    >
+                                        <i class="fas fa-shopping-cart"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+            <% } else { %>
+                <div class="empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:300px;">
+                    <i class="fas fa-store-slash" style="font-size:3.5rem;color:#6366f1;margin-bottom:1.2rem;"></i>
+                    <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:0.7rem;">Keine Produkte verfügbar</h2>
+                    <div style="font-size:1.1rem;color:#b3b8d0;max-width:400px;margin:0 auto;">Derzeit sind keine Produkte in diesem Shop verfügbar. Schau später wieder vorbei!</div>
+                </div>
+            <% } %>
+        </div>
+    </main>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="modal-backdrop" style="display:none;">
+        <div class="modal cart-modal">
+            <div class="modal-header">
+                <h2>Warenkorb</h2>
+                <button class="modal-close" onclick="closeCartModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="cartItems"></div>
+            <div id="cartTotal" style="margin-top:1.2rem; font-weight:600; text-align:right;"></div>
+            <div id="paymentMethods" style="margin-top:2rem;">
+                <div style="font-weight:600; color:#fff; margin-bottom:0.7rem;">Zahlungsmethode wählen:</div>
+                <div class="payment-methods">
+                    <label class="payment-method">
+                        <input type="radio" name="payment" value="paypal" onchange="handlePaymentMethodChange(this)">
+                        <span class="icon"><i class="fab fa-paypal"></i></span>
+                        <span>PayPal</span>
+                    </label>
+                    <label class="payment-method">
+                        <input type="radio" name="payment" value="crypto" onchange="handlePaymentMethodChange(this)">
+                        <span class="icon"><i class="fa-solid fa-coins"></i></span>
+                        <span>Krypto</span>
+                    </label>
+                    <label class="payment-method">
+                        <input type="radio" name="payment" value="stripe" onchange="handlePaymentMethodChange(this)">
+                        <span class="icon"><i class="fa-regular fa-credit-card"></i></span>
+                        <span>Kreditkarte (Stripe)</span>
+                    </label>
+                </div>
+            </div>
+            <div id="cryptoCoins" style="display:none; margin-top:1.1rem;">
+                <div style="font-weight:500; color:#fff; margin-bottom:0.5rem;">Kryptowährung wählen:</div>
+                <div class="crypto-coins">
+                    <label class="crypto-coin">
+                        <input type="radio" name="cryptoCoin" value="bitcoin">
+                        <span class="icon"><i class="fa-brands fa-btc"></i></span>
+                        <span>Bitcoin</span>
+                    </label>
+                    <label class="crypto-coin">
+                        <input type="radio" name="cryptoCoin" value="ethereum">
+                        <span class="icon"><i class="fa-brands fa-ethereum"></i></span>
+                        <span>Ethereum</span>
+                    </label>
+                    <label class="crypto-coin">
+                        <input type="radio" name="cryptoCoin" value="solana">
+                        <span class="icon"><i class="fa-solid fa-circle"></i></span>
+                        <span>Solana</span>
+                    </label>
+                    <label class="crypto-coin">
+                        <input type="radio" name="cryptoCoin" value="litecoin">
+                        <span class="icon"><i class="fa-brands fa-litecoin-sign"></i></span>
+                        <span>Litecoin</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top:2rem;">
+                <button class="btn btn-secondary" onclick="closeCartModal()">Schließen</button>
+                <button class="btn btn-primary" onclick="checkoutCart()">Bezahlen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profil/Bestellungen Dropdown als Card-Box -->
+    <div id="profileDropdown" class="profile-dropdown-box" style="display:none;">
+        <div class="profile-dropdown-content">
+            <div class="profile-dropdown-header">
+                <img id="profileAvatar" src="" alt="Avatar">
+                <div>
+                    <div id="profileName"></div>
+                    <div id="profileId"></div>
+                </div>
+            </div>
+            <button class="profile-dropdown-btn" onclick="openLicensesModal()"><i class="fas fa-key"></i> View your licenses</button>
+            <button class="profile-dropdown-btn logout-btn" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            <div id="profileOrdersContent" style="margin-top:1.2rem;"></div>
+        </div>
+    </div>
+
+    <!-- Licenses Modal -->
+    <div id="licensesModal" class="modal-backdrop" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Your Licenses</h2>
+                <button class="modal-close" onclick="closeLicensesModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="licensesContent" style="max-height: 350px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Notification system
+        function showNotification(title, message, type = 'info') {
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                document.body.removeChild(existingNotification);
+            }
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            let icon = 'fa-info-circle';
+            if (type === 'success') icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-exclamation-circle';
+            
+            notification.innerHTML = `
+                <div class="notification-icon">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${title}</div>
+                    <div class="notification-message">${message}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Lazy loading für Produktbilder
+        document.addEventListener('DOMContentLoaded', () => {
+            const productImages = document.querySelectorAll('.product-image');
+            
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.style.opacity = '0';
+                        img.addEventListener('load', () => {
+                            img.style.transition = 'opacity 0.3s ease';
+                            img.style.opacity = '1';
+                        });
+                        observer.unobserve(img);
+                    }
+                });
+            });
+
+            productImages.forEach(img => imageObserver.observe(img));
+        });
+
+        async function editProduct(productId) {
+            const button = event.currentTarget;
+            const originalContent = button.innerHTML;
+            
+            try {
+                // Show loading state
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                button.disabled = true;
+
+                const response = await fetch(`/dashboard/guild/<%= client.shopSlug %>/products/${productId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Produkt konnte nicht geladen werden');
+                }
+
+                // Redirect to dashboard edit page
+                window.location.href = `/dashboard/guild/<%= client.shopSlug %>/products/${productId}/edit`;
+            } catch (error) {
+                // Reset button state
+                button.innerHTML = originalContent;
+                button.disabled = false;
+                
+                showNotification('Fehler', error.message || 'Produkt konnte nicht bearbeitet werden', 'error');
+            }
+        }
+
+        function addToCart(id, name, price, imageUrl, stock) {
+            let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            const existing = cart.find(item => item.id === id);
+            if (existing) {
+                if (existing.qty >= stock) {
+                    showNotification('Fehler', `Maximale Menge (${stock}) erreicht!`, 'error');
+                    return;
+                }
+                existing.qty += 1;
+            } else {
+                if (stock < 1) {
+                    showNotification('Fehler', 'Nicht mehr verfügbar!', 'error');
+                    return;
+                }
+                cart.push({ id, name, price, imageUrl, qty: 1 });
+            }
+            localStorage.setItem('cart', JSON.stringify(cart));
+            showNotification('Cart', `${name} wurde zum Warenkorb hinzugefügt!`, 'success');
+            updateCartCount();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cart-Button Event
+            document.getElementById('cartBtn').onclick = openCartModal;
+            // Add-to-cart Buttons
+            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                const stock = parseInt(btn.getAttribute('data-stock'));
+                if (stock === 0) {
+                    btn.disabled = true;
+                    btn.classList.add('disabled-btn');
+                } else {
+                    btn.disabled = false;
+                    btn.classList.remove('disabled-btn');
+                }
+                btn.onclick = function() {
+                    if (btn.disabled) return;
+                    const id = this.getAttribute('data-id');
+                    const name = this.getAttribute('data-name');
+                    const price = parseFloat(this.getAttribute('data-price'));
+                    const imageUrl = this.getAttribute('data-image');
+                    const stock = parseInt(this.getAttribute('data-stock'));
+                    addToCart(id, name, price, imageUrl, stock);
+                };
+            });
+            // Cart-Count beim Laden aktualisieren
+            updateCartCount();
+            document.querySelectorAll('.payment-methods input[type="radio"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'crypto') {
+                        document.getElementById('cryptoCoins').style.display = 'block';
+                    } else {
+                        document.getElementById('cryptoCoins').style.display = 'none';
+                    }
+                    enableCheckoutButton();
+                });
+            });
+            document.querySelectorAll('.crypto-coins input[type="radio"]').forEach(radio => {
+                radio.addEventListener('change', enableCheckoutButton);
+            });
+            enableCheckoutButton();
+        });
+
+        function updateCartCount() {
+            let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            document.getElementById('cartCount').textContent = cart.reduce((sum, item) => sum + item.qty, 0);
+        }
+        function openCartModal() {
+            let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            const cartItemsDiv = document.getElementById('cartItems');
+            cartItemsDiv.innerHTML = '';
+            if (cart.length === 0) {
+                cartItemsDiv.innerHTML = '<div style="text-align:center; color:#aaa; margin:2rem 0;">Dein Warenkorb ist leer.</div>';
+                document.getElementById('cartTotal').textContent = '';
+            } else {
+                let total = 0;
+                cart.forEach(item => {
+                    total += item.price * item.qty;
+                    cartItemsDiv.innerHTML += `
+                        <div class="cart-item">
+                            ${item.imageUrl ? `<img src="${item.imageUrl}" class="cart-item-img">` : `<div class='cart-item-img' style='display:flex;align-items:center;justify-content:center;'><i class='fas fa-box'></i></div>`}
+                            <div class="cart-item-info">
+                                <div class="cart-item-name">${item.name}</div>
+                                <div class="cart-item-price">€${item.price.toFixed(2)}</div>
+                                <div class="cart-item-qty">
+                                    <button class="cart-item-qty-btn" onclick="changeCartQty('${item.id}', -1)">-</button>
+                                    <span>${item.qty}</span>
+                                    <button class="cart-item-qty-btn" onclick="changeCartQty('${item.id}', 1)">+</button>
+                                    <button class="cart-item-remove" onclick="removeFromCart('${item.id}')"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('cartTotal').textContent = 'Gesamt: €' + total.toFixed(2);
+            }
+            const backdrop = document.getElementById('cartModal');
+            const modal = backdrop.querySelector('.modal');
+            backdrop.style.display = 'flex';
+            modal.style.display = 'block';
+            setTimeout(() => {
+                backdrop.classList.add('show');
+                modal.classList.add('show');
+            }, 10);
+        }
+        function closeCartModal() {
+            const backdrop = document.getElementById('cartModal');
+            const modal = backdrop.querySelector('.modal');
+            backdrop.classList.remove('show');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                backdrop.style.display = 'none';
+                modal.style.display = 'none';
+            }, 300);
+        }
+        function changeCartQty(id, delta) {
+            let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            const item = cart.find(i => i.id === id);
+            if (!item) return;
+            // Hole das aktuelle Stock-Limit aus dem Button (falls vorhanden)
+            const btn = document.querySelector(`.add-to-cart-btn[data-id='${id}']`);
+            let stock = btn ? parseInt(btn.getAttribute('data-stock')) : null;
+            if (!stock || isNaN(stock)) stock = 999999; // Fallback, falls nicht gefunden
+            item.qty += delta;
+            if (item.qty < 1) item.qty = 1;
+            if (item.qty > stock) {
+                item.qty = stock;
+                showNotification('Fehler', `Maximale Menge (${stock}) erreicht!`, 'error');
+            }
+            localStorage.setItem('cart', JSON.stringify(cart));
+            openCartModal();
+            updateCartCount();
+        }
+        function removeFromCart(id) {
+            let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            cart = cart.filter(i => i.id !== id);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            openCartModal();
+            updateCartCount();
+        }
+        function enableCheckoutButton() {
+            const payment = document.querySelector('.payment-methods input[type="radio"]:checked');
+            let enable = false;
+            if (payment) {
+                if (payment.value === 'crypto') {
+                    const coin = document.querySelector('.crypto-coins input[type="radio"]:checked');
+                    enable = !!coin;
+                } else {
+                    enable = true;
+                }
+            }
+            document.querySelector('.modal-footer .btn.btn-primary').disabled = !enable;
+        }
+        function checkoutCart() {
+            const payment = document.querySelector('.payment-methods input[type="radio"]:checked');
+            if (!payment) {
+                showNotification('Fehler', 'Bitte wähle eine Zahlungsmethode!', 'error');
+                return;
+            }
+            if (payment.value === 'crypto') {
+                const coin = document.querySelector('.crypto-coins input[type="radio"]:checked');
+                if (!coin) {
+                    showNotification('Fehler', 'Bitte wähle eine Kryptowährung!', 'error');
+                    return;
+                }
+                const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                if (!cart.length) {
+                    showNotification('Fehler', 'Warenkorb ist leer!', 'error');
+                    return;
+                }
+                const item = cart[0];
+                fetch(`/shop/<%= client.shopSlug %>/order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId: item.id, paymentMethod: 'crypto', cryptoCoin: coin.value })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.paymentInfo && data.paymentInfo.type === 'crypto') {
+                        // Zeige Modal mit Adresse, Betrag, QR-Code
+                        closeCartModal();
+                        setTimeout(() => {
+                            document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
+                            const modal = document.createElement('div');
+                            modal.style.position = 'fixed';
+                            modal.style.top = '0';
+                            modal.style.left = '0';
+                            modal.style.width = '100vw';
+                            modal.style.height = '100vh';
+                            modal.style.background = 'rgba(0,0,0,0.7)';
+                            modal.style.display = 'flex';
+                            modal.style.alignItems = 'center';
+                            modal.style.justifyContent = 'center';
+                            modal.style.zIndex = '9999';
+                            modal.innerHTML = `
+                                <div class="modal" style="background:#181f2a;padding:2.2rem 2.5rem 1.5rem 2.5rem;border-radius:16px;min-width:340px;max-width:95vw;">
+                                    <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">
+                                        <h2 style="font-size:1.3rem;margin:0;">Krypto-Zahlung (${data.paymentInfo.coin.toUpperCase()})</h2>
+                                        <button style="background:none;border:none;color:#aaa;font-size:1.3rem;cursor:pointer;" onclick="this.closest('.modal-backdrop').remove()"><i class="fas fa-times"></i></button>
+                                    </div>
+                                    <div style="margin-bottom:1.2rem;">
+                                        <div style="font-weight:600;margin-bottom:0.5rem;">Adresse:</div>
+                                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                                            <span id="cryptoAddress" style="font-family:monospace;">${data.paymentInfo.address}</span>
+                                            <button onclick="navigator.clipboard.writeText('${data.paymentInfo.address}');this.innerHTML='<i class=\'fas fa-check\'></i>';setTimeout(()=>{this.innerHTML='<i class=\'fas fa-copy\'></i>';},1200);" class="copy-btn"><i class="fas fa-copy"></i></button>
+                                        </div>
+                                    </div>
+                                    <div style="margin-bottom:1.2rem;">
+                                        <div style="font-weight:600;">Betrag:</div>
+                                        <div><b>${data.paymentInfo.amountCoin} ${data.paymentInfo.coin.toUpperCase()}</b> (ca. €${data.paymentInfo.amountEur})</div>
+                                    </div>
+                                    <div style="margin-bottom:1.2rem;text-align:center;">
+                                        <img src="${data.paymentInfo.qrCodeUrl}" alt="QR Code" style="width:160px;height:160px;border-radius:8px;background:#fff;" />
+                                    </div>
+                                    <div style="margin-bottom:1.2rem;color:#aaa;">${data.paymentInfo.instructions}</div>
+                                    <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:0.7rem;">
+                                        <button class="btn btn-secondary" onclick="this.closest('.modal-backdrop').remove()">Schließen</button>
+                                        <button class="btn btn-primary" onclick="this.disabled=true;this.innerHTML='<i class=\'fas fa-spinner fa-spin\'></i> Gesendet...';showNotification('Info','Bitte warte auf die Bestätigung durch den Admin!','info');setTimeout(()=>{this.closest('.modal-backdrop').remove();},2000);">Zahlung gesendet</button>
+                                    </div>
+                                </div>
+                            `;
+                            modal.className = 'modal-backdrop';
+                            document.body.appendChild(modal);
+                        }, 350);
+                    } else {
+                        showNotification('Fehler', data.error || 'Krypto-Zahlung nicht möglich.', 'error');
+                    }
+                })
+                .catch(() => {
+                    showNotification('Fehler', 'Krypto-Checkout Fehler.', 'error');
+                });
+                return;
+            }
+            if (payment.value === 'paypal') {
+                // Schließe das Warenkorb-Modal
+                closeCartModal();
+                setTimeout(() => {
+                    // Entferne alle alten Modals
+                    document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
+                    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                    if (!cart.length) {
+                        showNotification('Fehler', 'Warenkorb ist leer!', 'error');
+                        return;
+                    }
+                    const item = cart[0];
+                    const paypalEmail = '<%= client.config.paypalLink %>';
+                    const amount = item.price.toFixed(2);
+                    const productName = item.name;
+                    // Minimalistisches Modal mit garantierter Sichtbarkeit
+                    const modal = document.createElement('div');
+                    modal.style.position = 'fixed';
+                    modal.style.top = '0';
+                    modal.style.left = '0';
+                    modal.style.width = '100vw';
+                    modal.style.height = '100vh';
+                    modal.style.background = 'rgba(0,0,0,0.7)';
+                    modal.style.display = 'flex';
+                    modal.style.alignItems = 'center';
+                    modal.style.justifyContent = 'center';
+                    modal.style.zIndex = '9999';
+                    modal.innerHTML = `
+                        <div style="background:#181f2a; color:#fff; border-radius:18px; padding:2.5rem 2.2rem; min-width:340px; max-width:95vw; box-shadow:0 8px 32px #0008; position:relative; font-family: 'Inter', Arial, sans-serif;">
+                            <button id="paypalModalClose" style="position:absolute;top:1.2rem;right:1.2rem;background:none;border:none;color:#aaa;font-size:2rem;cursor:pointer;">&times;</button>
+                            <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:1.2rem;">
+                                <i class='fab fa-paypal' style='font-size:2.1rem;color:#009cde;'></i>
+                                <h2 style="margin:0;font-size:1.45rem;font-weight:700;letter-spacing:0.01em;">PayPal-Zahlung</h2>
+                            </div>
+                            <div style="margin-bottom:1.3rem;">
+                                <div style="font-size:1.08rem;margin-bottom:0.5rem;">Bitte sende <b>€${amount}</b> für <b>${productName}</b> an unsere PayPal-E-Mail:</div>
+                                <div style="display:flex;align-items:center;gap:0.5rem;background:#23272f;border-radius:8px;padding:0.7rem 1.1rem 0.7rem 1.1rem;font-size:1.13rem;font-weight:600;letter-spacing:0.01em;user-select:all;">
+                                    <span id="paypalEmailText">${paypalEmail}</span>
+                                    <button id="copyPaypalEmail" style="background:none;border:none;color:#38bdf8;font-size:1.2rem;cursor:pointer;" title="Kopieren"><i class="fas fa-copy"></i></button>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:1.2rem;font-size:1.01rem;color:#a5b4fc;">
+                                Nach dem Klick auf <b>Geld gesendet</b> prüfen wir deinen Zahlungseingang und schalten deine Bestellung frei.
+                            </div>
+                            <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1.2rem;">
+                                <button id="paypalSentBtn" class="btn" style="background:#22c55e;color:#fff;font-weight:600;padding:0.7rem 1.5rem;border-radius:8px;display:inline-flex;align-items:center;gap:0.6rem;font-size:1.08rem;box-shadow:0 4px 16px #22c55e55;">
+                                    <i class="fas fa-check"></i> Geld gesendet
+                                </button>
+                            </div>
+                            <div id="paypalSentLoading" style="display:none; margin-top:1.2rem; color:#6366f1; font-weight:600;">
+                                <i class="fas fa-spinner fa-spin"></i> Wir prüfen deinen Zahlungseingang ...
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    // Copy-Button für PayPal-E-Mail
+                    const copyBtn = modal.querySelector('#copyPaypalEmail');
+                    if (copyBtn) {
+                        copyBtn.onclick = function() {
+                            const email = modal.querySelector('#paypalEmailText').textContent;
+                            navigator.clipboard.writeText(email);
+                            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                            setTimeout(() => { copyBtn.innerHTML = '<i class="fas fa-copy"></i>'; }, 1200);
+                        };
+                    }
+                    // Modal schließen
+                    modal.querySelector('#paypalModalClose').onclick = function() {
+                        modal.remove();
+                    };
+                    // Event-Handler für "Geld gesendet"
+                    const sentBtn = modal.querySelector('#paypalSentBtn');
+                    const sentLoading = modal.querySelector('#paypalSentLoading');
+                    if (sentBtn && sentLoading) {
+                        sentBtn.onclick = async function() {
+                            this.disabled = true;
+                            sentLoading.style.display = 'block';
+                            try {
+                                const response = await fetch(`/shop/<%= client.shopSlug %>/order`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ productId: item.id, paymentMethod: 'paypal' })
+                                });
+                                const data = await response.json();
+                                if (data.orderId) {
+                                    sentLoading.innerHTML = `<span style='color:#22c55e;'><i class='fas fa-check-circle'></i> Danke! Wir prüfen deinen Zahlungseingang. Deine Bestellnummer: <b>${data.orderId}</b></span>`;
+                                } else {
+                                    sentLoading.innerHTML = `<span style='color:#ef4444;'>Fehler beim Anlegen der Bestellung. Bitte versuche es erneut.</span>`;
+                                }
+                            } catch (e) {
+                                sentLoading.innerHTML = `<span style='color:#ef4444;'>Fehler beim Anlegen der Bestellung. Bitte versuche es erneut.</span>`;
+                            }
+                        };
+                    }
+                }, 350);
+                return;
+            }
+            if (payment.value === 'stripe') {
+                // Stripe-Checkout Integration
+                const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                if (!cart.length) {
+                    showNotification('Fehler', 'Warenkorb ist leer!', 'error');
+                    return;
+                }
+                fetch(`/shop/<%= client.shopSlug %>/stripe-checkout`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cart }),
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.url) {
+                        window.location.href = data.url;
+                    } else {
+                        showNotification('Fehler', 'Stripe-Checkout konnte nicht gestartet werden.', 'error');
+                    }
+                })
+                .catch(() => {
+                    showNotification('Fehler', 'Stripe-Checkout Fehler.', 'error');
+                });
+                return;
+            }
+        }
+
+        // Discord Auth UI/Session
+        let currentUser = null;
+        function updateUserArea() {
+            fetch('/auth/me').then(r => r.json()).then(data => {
+                currentUser = data.user;
+                const userArea = document.getElementById('userArea');
+                if (currentUser && currentUser.id && currentUser.username) {
+                    const avatarUrl = currentUser.avatar ?
+                        `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png` :
+                        'https://cdn.discordapp.com/embed/avatars/0.png';
+                    userArea.innerHTML = `
+                        <a href="/shop/<%= client.shopSlug %>/feedback" class="btn btn-secondary feedback-btn" style="margin-left:1.1rem;">
+                            <i class="fas fa-star"></i> Feedback
+                        </a>
+                        <button id="cartBtn" class="cart-btn" onclick="openCartModal()">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span id="cartCount" class="cart-count">0</span>
+                        </button>
+                        <button id="userAvatarBtn" onclick="openProfileDropdown()">
+                            <img src="${avatarUrl}" alt="Avatar">
+                        </button>
+                    `;
+                    document.getElementById('cartBtn').onclick = openCartModal;
+                    updateCartCount();
+                } else {
+                    const shopPath = window.location.pathname + window.location.search;
+                    userArea.innerHTML = `<a href="/auth/discord?redirect=${encodeURIComponent(shopPath)}" class="btn btn-primary" onclick="console.log('Discord Login Button clicked')"><i class="fab fa-discord"></i> Mit Discord anmelden</a>`;
+                }
+                // Add-to-cart Buttons neu binden
+                document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                    const stock = parseInt(btn.getAttribute('data-stock'));
+                    if (stock === 0) {
+                        btn.disabled = true;
+                        btn.classList.add('disabled-btn');
+                    } else {
+                        btn.disabled = false;
+                        btn.classList.remove('disabled-btn');
+                    }
+                    btn.onclick = function() {
+                        if (btn.disabled) return;
+                        const id = this.getAttribute('data-id');
+                        const name = this.getAttribute('data-name');
+                        const price = parseFloat(this.getAttribute('data-price'));
+                        const imageUrl = this.getAttribute('data-image');
+                        const stock = parseInt(this.getAttribute('data-stock'));
+                        addToCart(id, name, price, imageUrl, stock);
+                    };
+                });
+            });
+        }
+        function openProfileDropdown() {
+            if (!currentUser) return;
+            const avatarUrl = currentUser.avatar ?
+                `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png` :
+                'https://cdn.discordapp.com/embed/avatars/0.png';
+            document.getElementById('profileAvatar').src = avatarUrl;
+            document.getElementById('profileName').textContent = currentUser.username;
+            document.getElementById('profileId').textContent = `ID: ${currentUser.id}`;
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.style.display = 'block';
+            dropdown.classList.add('show');
+            // Kein automatisches Laden der Bestellungen/Keys mehr im Dropdown
+            document.getElementById('profileOrdersContent').innerHTML = '';
+            setTimeout(() => {
+                document.addEventListener('mousedown', closeDropdownOnClickOutside);
+                document.addEventListener('keydown', closeDropdownOnEscape);
+                window.addEventListener('scroll', closeProfileDropdown);
+            }, 0);
+        }
+        function closeDropdownOnClickOutside(e) {
+            const dropdown = document.getElementById('profileDropdown');
+            if (!dropdown.contains(e.target) && e.target.id !== 'userAvatarBtn') {
+                closeProfileDropdown();
+            }
+        }
+        function closeDropdownOnEscape(e) {
+            if (e.key === 'Escape') closeProfileDropdown();
+        }
+        function closeProfileDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.remove('show');
+            setTimeout(() => { dropdown.style.display = 'none'; }, 180);
+            document.removeEventListener('mousedown', closeDropdownOnClickOutside);
+            document.removeEventListener('keydown', closeDropdownOnEscape);
+            window.removeEventListener('scroll', closeProfileDropdown);
+        }
+        async function loadProfileOrdersAndInfo() {
+            const ordersDiv = document.getElementById('profileOrdersContent');
+            ordersDiv.innerHTML = `<div style='color:#aaa; font-size:1.01rem; margin-bottom:1.2rem;'>Willkommen im Shop, <b>${currentUser.username}</b>!</div>`;
+            try {
+                const res = await fetch('/shop/<%= client.shopSlug %>/user-orders');
+                const orders = await res.json();
+                if (!orders.length) {
+                    ordersDiv.innerHTML += '<div style="color:#aaa;">Keine Bestellungen gefunden.</div>';
+                    return;
+                }
+                ordersDiv.innerHTML += '<div style="margin-top:0.7rem; font-weight:600; color:#fff;">Deine Bestellungen:</div>';
+                for (const order of orders) {
+                    let resourceHtml = '';
+                    if (order._id) {
+                        const resRes = await fetch(`/api/order/${order._id}/resource`);
+                        const resource = await resRes.json();
+                        if (resource && resource.value) {
+                            resourceHtml = `<div style='margin-top:0.5rem; color:#22c55e; font-size:0.97rem; word-break:break-all;'><b>Code/Datei:</b> ${resource.value}${resource.fileUrl ? ` <a href='${resource.fileUrl}' target='_blank'>(Download)</a>` : ''}</div>`;
+                        }
+                    }
+                    ordersDiv.innerHTML += `
+                        <div style='background:rgba(31,41,55,0.85); border-radius:10px; margin-bottom:1rem; padding:1rem 1.2rem;'>
+                            <div style='font-weight:600; color:#a5b4fc;'>${order.productId?.name || 'Produkt'}</div>
+                            <div style='color:#fff;'>Bestellt am: ${new Date(order.createdAt).toLocaleString()}</div>
+                            <div style='color:#38bdf8;'>Status: ${order.status}</div>
+                            ${resourceHtml}
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                ordersDiv.innerHTML += '<div style="color:#ef4444;">Fehler beim Laden der Bestellungen.</div>';
+            }
+        }
+        async function logoutUser() {
+            await fetch('/auth/logout', { method: 'POST' });
+            updateUserArea();
+            showNotification('Info', 'Abgemeldet.', 'info');
+        }
+        document.addEventListener('DOMContentLoaded', updateUserArea);
+
+        function openLicensesModal() {
+            const backdrop = document.getElementById('licensesModal');
+            const modal = backdrop.querySelector('.modal');
+            backdrop.style.display = 'flex';
+            modal.style.display = 'block';
+            setTimeout(() => {
+                backdrop.classList.add('show');
+                modal.classList.add('show');
+            }, 10);
+            loadUserLicenses();
+        }
+        function closeLicensesModal() {
+            const backdrop = document.getElementById('licensesModal');
+            const modal = backdrop.querySelector('.modal');
+            backdrop.classList.remove('show');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                backdrop.style.display = 'none';
+                modal.style.display = 'none';
+            }, 300);
+        }
+        async function loadUserLicenses() {
+            const content = document.getElementById('licensesContent');
+            content.innerHTML = '<div style="color:#aaa;">Lade deine Lizenzen...</div>';
+            try {
+                const res = await fetch('/shop/<%= client.shopSlug %>/user-orders');
+                const orders = await res.json();
+                if (!orders.length) {
+                    content.innerHTML = '<div style="color:#aaa;">Keine Bestellungen gefunden.</div>';
+                    return;
+                }
+                let found = false;
+                let html = '';
+                let licenseIdx = 0;
+                for (const order of orders) {
+                    if (!order._id) continue;
+                    const resRes = await fetch(`/api/order/${order._id}/resource`);
+                    const resource = await resRes.json();
+                    if (resource && resource.value) {
+                        found = true;
+                        html += `<div class='license-card'>`;
+                        html += `<div class='license-title'><i class='fas fa-box'></i> ${order.productId?.name || 'Produkt'}</div>`;
+                        html += `<div class='license-meta'>Bestellt am: ${new Date(order.createdAt).toLocaleString()}</div>`;
+                        html += `<div class='license-status'>Status: ${order.status}</div>`;
+                        if (resource.type === 'key' || resource.type === 'account') {
+                            html += `<div class='license-value-row'>`;
+                            html += `<span class='license-blur' id='license-blur-${licenseIdx}' onclick='toggleBlur(${licenseIdx})'>${resource.value}</span>`;
+                            html += `<button class='license-copy-btn' title='Kopieren' onclick='navigator.clipboard.writeText(${JSON.stringify(resource.value)});showNotification("Kopiert", "Der Code wurde in die Zwischenablage kopiert!", "success");'>
+                                <i class='fas fa-copy'></i></button>`;
+                            html += `</div>`;
+                        } else if (resource.type === 'file' && resource.fileUrl) {
+                            html += `<div style='margin-top:0.7rem;'><a class='license-download' href='${resource.fileUrl}' download><i class='fas fa-download'></i> Datei herunterladen</a></div>`;
+                            html += `<div style='color:#aaa; font-size:0.97rem; margin-top:0.5rem;'>Dateiname: ${resource.value}</div>`;
+                        }
+                        html += `</div>`;
+                        licenseIdx++;
+                    }
+                }
+                if (!found) {
+                    content.innerHTML = '<div style="color:#aaa;">Keine Lizenzen gefunden.</div>';
+                } else {
+                    content.innerHTML = html;
+                }
+            } catch (e) {
+                content.innerHTML = '<div style="color:#ef4444;">Fehler beim Laden der Lizenzen.</div>';
+            }
+        }
+        // Toggle Blur Funktion für Lizenzwerte
+        function toggleBlur(idx) {
+            const el = document.getElementById('license-blur-' + idx);
+            if (el.classList.contains('unblur')) {
+                el.classList.remove('unblur');
+            } else {
+                el.classList.add('unblur');
+            }
+        }
+        // Öffne das Licenses-Modal automatisch, wenn showLicenses=1 in der URL steht
+        window.addEventListener('DOMContentLoaded', function() {
+            const url = new URL(window.location.href);
+            if (url.searchParams.get('showLicenses') === '1') {
+                openLicensesModal();
+            }
+        });
+
+        function filterProducts() {
+            const query = document.getElementById('productSearchInput').value.toLowerCase();
+            document.querySelectorAll('.product-card').forEach(card => {
+                const name = card.querySelector('.product-name-classic, .product-name')?.textContent?.toLowerCase() || '';
+                if (name.includes(query)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function handlePaymentMethodChange(radio) {
+            const cryptoCoins = document.getElementById('cryptoCoins');
+            cryptoCoins.style.display = radio.value === 'crypto' ? 'block' : 'none';
+        }
+
+        function openWalletModal() {
+            const backdrop = document.getElementById('walletModal');
+            const modal = backdrop.querySelector('.modal');
+            backdrop.style.display = 'flex';
+            modal.style.display = 'block';
+            setTimeout(() => {
+                backdrop.classList.add('show');
+                modal.classList.add('show');
+            }, 10);
+            loadWalletData();
+        }
+
+        function closeWalletModal() {
+            const backdrop = document.getElementById('walletModal');
+            const modal = backdrop.querySelector('.modal');
+            backdrop.classList.remove('show');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                backdrop.style.display = 'none';
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        async function loadWalletData() {
+            // This would be replaced with actual API calls to your backend
+            try {
+                const response = await fetch('/api/wallet/balances');
+                const data = await response.json();
+                updateWalletUI(data);
+            } catch (error) {
+                showNotification('Error', 'Could not load wallet data', 'error');
+            }
+        }
+
+        function showDepositAddress() {
+            // Implementation for showing deposit addresses
+        }
+
+        function showWithdrawForm() {
+            // Implementation for withdrawal functionality
+        }
+
+        function updateWalletUI(data) {
+            // Implementation for updating the wallet UI with the received data
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord SaaS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="background">
+        <div class="bg-grid"></div>
+        <div class="bg-glow"></div>
+        <div class="bg-glow"></div>
+    </div>
+
+    <header>
+        <a href="/" class="logo"><span>Discord SaaS</span></a>
+        <% if (user) { %>
+            <a href="/dashboard" class="dashboard-button">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+        <% } else { %>
+            <a href="/auth/discord" class="dashboard-button">
+                <i class="fab fa-discord"></i> Mit Discord anmelden
+            </a>
+        <% } %>
+    </header>
+
+    <main>
+        <div class="card">
+            <div class="card-header">
+                <h1>Discord Shop-System</h1>
+                <div class="subtitle">Verwalte Produkte, Bestellungen und Zahlungen direkt über Discord</div>
+            </div>
+            
+            <div class="card-body">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <p><i class="fas fa-rocket fa-lg" style="color: var(--primary-color); margin-right: 0.5rem;"></i>Ein vollständiges SaaS-System für Discord-Server mit Shop-Funktionalität und Bot-Integration.</p>
+                    <% if (!user) { %>
+                        <a href="/auth/discord" class="btn btn-block" style="margin-top: 2rem;">
+                            <i class="fab fa-discord"></i> Mit Discord starten
+                        </a>
+                    <% } %>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                    <div style="background-color: rgba(31, 41, 55, 0.7); border-radius: var(--radius); padding: 1.5rem; border: 1px solid var(--border-color);">
+                        <i class="fas fa-shopping-cart" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                        <h3 style="margin-bottom: 0.5rem;">Produktverwaltung</h3>
+                        <p style="color: var(--text-secondary);"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>Erstelle und verwalte Produkte für deinen Discord-Server</p>
+                    </div>
+                    
+                    <div style="background-color: rgba(31, 41, 55, 0.7); border-radius: var(--radius); padding: 1.5rem; border: 1px solid var(--border-color);">
+                        <i class="fas fa-credit-card" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                        <h3 style="margin-bottom: 0.5rem;">Zahlungsintegration</h3>
+                        <p style="color: var(--text-secondary);"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>Akzeptiere Zahlungen über PayPal und Kryptowährungen</p>
+                    </div>
+                    
+                    <div style="background-color: rgba(31, 41, 55, 0.7); border-radius: var(--radius); padding: 1.5rem; border: 1px solid var(--border-color);">
+                        <i class="fas fa-robot" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                        <h3 style="margin-bottom: 0.5rem;">Discord Bot</h3>
+                        <p style="color: var(--text-secondary);"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>Integrierter Bot für Bestellungsverwaltung</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <p class="help-text">
+                    Hast du Fragen? <a href="#" class="help-link"><i class="fas fa-question-circle"></i> Kontaktiere uns</a>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Notification system
+        function showNotification(title, message, type = 'info') {
+            // Remove any existing notifications
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                document.body.removeChild(existingNotification);
+            }
+            
+            // Create new notification
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            // Icon based on notification type
+            let icon = 'fa-info-circle';
+            if (type === 'success') icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-exclamation-circle';
+            
+            notification.innerHTML = `
+                <div class="notification-icon">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${title}</div>
+                    <div class="notification-message">${message}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

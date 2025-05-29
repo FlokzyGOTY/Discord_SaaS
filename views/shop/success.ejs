@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danke für deinen Kauf! - <%= shopName %></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .success-header {
+            background: linear-gradient(90deg, #6366f1, #60a5fa 90%);
+            border-radius: 18px 18px 0 0;
+            padding: 2.2rem 1rem 1.2rem 1rem;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 3.5rem;
+            color: #fff;
+            margin-bottom: 1.2rem;
+        }
+        .success-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+        .success-container {
+            max-width: 480px;
+            margin: 4rem auto 0 auto;
+            background: rgba(31,41,55,0.95);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            padding: 0;
+            border: 1px solid var(--border-color);
+        }
+        .success-details {
+            padding: 2rem 1.5rem 1.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+        .success-block {
+            background: rgba(17,25,40,0.97);
+            border-radius: 10px;
+            padding: 1.1rem 1rem;
+            margin-bottom: 0.7rem;
+            border: 1px solid #6366f1;
+        }
+        .success-label {
+            color: #a5b4fc;
+            font-size: 0.98rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+        .success-value {
+            color: #fff;
+            font-family: monospace;
+            font-size: 1.08rem;
+            word-break: break-all;
+        }
+        .success-product {
+            color: #60a5fa;
+            font-size: 1.13rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .success-resource {
+            margin-top: 1.2rem;
+        }
+        .license-blur {
+            filter: blur(7px);
+            background: #23272f;
+            color: #38bdf8;
+            border-radius: 7px;
+            padding: 0.5rem 0.8rem;
+            font-family: monospace;
+            font-size: 1.08rem;
+            cursor: pointer;
+            user-select: none;
+            transition: filter 0.18s;
+        }
+        .license-blur.unblur {
+            filter: none;
+        }
+        .license-copy-btn {
+            border: none;
+            background: rgba(99,102,241,0.13);
+            color: var(--primary-color);
+            border-radius: 6px;
+            padding: 0.25rem 0.6rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s;
+        }
+        .license-copy-btn:hover {
+            background: var(--primary-color);
+            color: #fff;
+        }
+        .license-download {
+            display: inline-block;
+            margin-top: 0.7rem;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            padding: 0.7rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .license-download:hover {
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        }
+    </style>
+</head>
+<body>
+    <div class="background">
+        <div class="bg-grid"></div>
+        <div class="bg-glow"></div>
+        <div class="bg-glow"></div>
+    </div>
+    <main>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div style="color:#ef4444; font-weight:700; margin-bottom:2rem; font-size:1.15rem; text-align:center;">
+                <i class="fas fa-exclamation-triangle"></i> <%= error %>
+            </div>
+        <% } %>
+        <% let boughtProductId = order && order.productId ? order.productId.toString() : null; %>
+        <div class="success-container">
+            <div class="success-header">
+                <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="success-title">Payment Successful</div>
+                <div style="color:#e0fce7; font-size:1.1rem;">Thank you for your purchase! Your transaction has been successfully processed.</div>
+            </div>
+            <div class="success-details">
+                <div class="success-block">
+                    <div class="success-label">Transaction ID</div>
+                    <div class="success-value"><%= session?.id || order?._id %></div>
+                </div>
+                <div class="success-block">
+                    <div class="success-label">User ID</div>
+                    <div class="success-value"><%= order?.userId || '-' %></div>
+                </div>
+                <div class="success-block">
+                    <div class="success-product"><i class="fas fa-box"></i> <%= product ? product.name : 'Produkt' %></div>
+                    <div style="color:#22c55e; font-weight:600;">$<%= order?.amount?.toFixed(2) %></div>
+                </div>
+                <div class="success-block success-resource">
+                    <div class="success-label">Deine Ressource</div>
+                    <% if (resource) { %>
+                        <% if (resource.type === 'file' && resource.fileUrl) { %>
+                            <a class="license-download" href="<%= resource.fileUrl %>" download>
+                                <i class="fas fa-download"></i> Datei herunterladen
+                            </a>
+                            <div style="color:#aaa; font-size:0.97rem; margin-top:0.5rem;">Dateiname: <%= resource.value %></div>
+                        <% } else { %>
+                            <span class="license-blur" id="success-blur" onclick="toggleSuccessBlur()"><%= resource.value %></span>
+                            <button class="license-copy-btn" title="Kopieren" onclick="navigator.clipboard.writeText('<%= resource.value %>');showNotification('Kopiert', 'Der Code wurde in die Zwischenablage kopiert!', 'success');"><i class="fas fa-copy"></i></button>
+                        <% } %>
+                    <% } else { %>
+                        <div style="color:#ef4444; font-weight:600;">Es wurde keine Ressource zugewiesen.<br>Bitte kontaktiere den Support.</div>
+                    <% } %>
+                </div>
+                <div style="color:#aaa; font-size:0.98rem; text-align:center;">Bei Fragen wende dich bitte an den Shop-Support.</div>
+                <div style="display:flex; gap:1rem; justify-content:center; margin-top:1.2rem;">
+                    <a href="/shop/<%= client?.shopSlug %>" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Home</a>
+                    <a href="/shop/<%= client?.shopSlug %>?showLicenses=1" class="btn btn-primary"><i class="fas fa-box"></i> View My Products</a>
+                </div>
+            </div>
+        </div>
+        <script>
+            function toggleSuccessBlur() {
+                const el = document.getElementById('success-blur');
+                if (el.classList.contains('unblur')) {
+                    el.classList.remove('unblur');
+                } else {
+                    el.classList.add('unblur');
+                }
+            }
+
+            // Entferne gekaufte Produkte aus dem Warenkorb (localStorage), wenn Success-Seite geladen wird
+            window.addEventListener('DOMContentLoaded', function() {
+                try {
+                    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                    var boughtProductId = <%- JSON.stringify(boughtProductId) %>;
+                    if (boughtProductId) {
+                        cart = cart.filter(item => item.id !== boughtProductId);
+                        localStorage.setItem('cart', JSON.stringify(cart));
+                    }
+                    // Optional: Cart-Count im Shop aktualisieren, falls User zurückgeht
+                    if (window.opener && typeof window.opener.updateCartCount === 'function') {
+                        window.opener.updateCartCount();
+                    }
+                } catch (e) {}
+            });
+        </script>
+    </main>
+</body>
+</html> 

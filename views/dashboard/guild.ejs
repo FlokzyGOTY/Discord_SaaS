@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= guild.name %> - Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background">
+        <div class="bg-grid"></div>
+        <div class="bg-glow"></div>
+        <div class="bg-glow"></div>
+    </div>
+
+    <header>
+        <a href="/" class="logo"><span>OrderBot</span></a>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <div class="status-indicator online">
+                <i class="fas fa-circle"></i> Online
+            </div>
+            <a href="/dashboard" class="dashboard-button btn-secondary">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+            <a href="/auth/logout" class="dashboard-button">
+                <i class="fas fa-sign-out-alt"></i> Abmelden
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <div class="dashboard-container">
+            <div class="main-content">
+                <!-- Server-Kopfzeile -->
+                <div class="guild-header-banner">
+                    <img src="<%= guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png' %>" 
+                         alt="<%= guild.name %>" 
+                         class="guild-icon">
+                    <h1 class="guild-name"><%= guild.name %></h1>
+                </div>
+                
+                <!-- Statistik-Karten -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon orders">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stat-value"><%= orders.length %></div>
+                        <div class="stat-label">Bestellungen</div>
+                        <div class="stat-meta">
+                            <i class="fas fa-calendar"></i> Alle Zeiten
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon revenue">
+                            <i class="fas fa-euro-sign"></i>
+                        </div>
+                        <div class="stat-value">
+                            <%= orders.reduce((sum, order) => sum + (order.amount || 0), 0).toFixed(2) %>€
+                        </div>
+                        <div class="stat-label">Einnahmen</div>
+                        <div class="stat-meta">
+                            <i class="fas fa-calendar"></i> Alle Zeiten
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon products">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-value"><%= products.length %></div>
+                        <div class="stat-label">Produkte</div>
+                        <div class="stat-meta">
+                            <i class="fas fa-tag"></i> Aktiv: <%= products.filter(p => p.active).length %>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon servers">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <div class="stat-value"><%= allResourcesCount %></div>
+                        <div class="stat-label">Alle Ressourcen</div>
+                        <div class="stat-meta">
+                            <span class="server-status-indicator"><i class="fas fa-database"></i> Gesamt</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tabs Navigation -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-th-large"></i> Dashboard
+                        </div>
+                        <div class="tab-navigation">
+                            <div class="tabs">
+                                <div class="tab active" data-tab="products">
+                                    <i class="fas fa-shopping-cart"></i> Produkte
+                                </div>
+                                <div class="tab" data-tab="orders">
+                                    <i class="fas fa-clipboard-list"></i> Bestellungen
+                                </div>
+                                <div class="tab" data-tab="paypal-orders" style="position:relative;">
+                                    <i class="fab fa-paypal"></i> PayPal Orders
+                                    <%
+                                      const paypalPendingCount = orders.filter(order => order.paymentMethod === 'paypal' && order.status === 'paypal_pending').length;
+                                    %>
+                                    <% if (paypalPendingCount > 0) { %>
+                                        <span class="notify-badge"><%= paypalPendingCount %></span>
+                                    <% } %>
+                                </div>
+                                <div class="tab" data-tab="settings">
+                                    <i class="fas fa-cog"></i> Einstellungen
+                                </div>
+                                <a href="/dashboard/guild/<%= guild.id %>/coupons" class="tab" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+                                    <i class="fas fa-ticket-alt"></i> Coupons
+                                </a>
+                                <a href="/dashboard/guild/<%= guild.id %>/rss" class="tab" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+                                    <i class="fas fa-rss"></i> Ressourcen
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab Contents -->
+                    <div class="widget-body">
+                        <!-- Products Tab -->
+                        <div class="tab-content active" id="products-tab">
+                            <div class="sub-tabs">
+                                <div class="sub-tab sub-tab-active" data-subtab="product-list">Produktübersicht</div>
+                                <div class="sub-tab" data-subtab="product-create">Produkt erstellen</div>
+                            </div>
+                            <!-- Product List (nur einmal!) -->
+                            <div id="product-list" class="sub-tab-content" style="display:block;">
+                                <% if (products.length > 0) { %>
+                                    <div class="table-container">
+                                        <table class="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Produkt</th>
+                                                    <th>Preis</th>
+                                                    <th>Abo</th>
+                                                    <th>Status</th>
+                                                    <th>Aktionen</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% products.forEach(product => { %>
+                                                    <tr>
+                                                        <td>
+                                                            <div class="product-item" style="align-items: center; gap: 0.7rem;">
+                                                                <i class="fas fa-box" style="color: #aaa; font-size: 1.3rem;"></i>
+                                                                <div class="product-info">
+                                                                    <div class="product-name"><%= product.name %></div>
+                                                                    <div class="product-description"><%= product.description.substring(0, 40) %><%= product.description.length > 40 ? '...' : '' %></div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>€<%= typeof product.price === 'number' ? product.price.toFixed(2) : 'N/A' %></td>
+                                                        <td>
+                                                            <% if (product.isSubscriptionAvailable) { %>
+                                                                <span class="badge badge-info" style="background:#6366f1;color:#fff;padding:0.2em 0.7em;border-radius:8px;font-size:0.95em;"><i class="fas fa-sync-alt"></i> Abo</span>
+                                                            <% } else { %>
+                                                                <span class="badge badge-secondary" style="background:#aaa;color:#fff;padding:0.2em 0.7em;border-radius:8px;font-size:0.95em;">Einmalig</span>
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <span class="status-indicator <%= product.active ? 'online' : 'offline' %>">
+                                                                <%= product.active ? 'Aktiv' : 'Inaktiv' %>
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <div class="action-buttons">
+                                                                <button class="btn-action" onclick="openProductEditModal('<%= product._id %>')">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
+                                                                <form method="POST" action="/dashboard/guild/<%= guild.id %>/product/<%= product._id %>/delete" onsubmit="return confirm('Bist du sicher, dass du dieses Produkt löschen möchtest?');">
+                                                                    <button type="submit" class="btn-action btn-danger" title="Löschen">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <% }) %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } else { %>
+                                    <div class="empty-state">
+                                        <i class="fas fa-box-open"></i>
+                                        <h3>Keine Produkte</h3>
+                                        <p>Du hast noch keine Produkte erstellt. Füge dein erstes Produkt hinzu!</p>
+                                        <button class="btn-action" onclick="document.querySelector('.sub-tab[data-subtab=\'product-create\']').click()">
+                                            <i class="fas fa-plus"></i> Produkt erstellen
+                                        </button>
+                                    </div>
+                                <% } %>
+                            </div>
+                            <!-- Product Create Form (nur einmal!) -->
+                            <div id="product-create" class="sub-tab-content" style="display:none;">
+                                <form method="POST" action="/dashboard/guild/<%= guild.id %>/product" class="form-grid" enctype="multipart/form-data">
+                                    <div class="form-group">
+                                        <label for="name" class="form-label">Produktname</label>
+                                        <input type="text" id="name" name="name" class="form-control" placeholder="z.B. Premium Mitgliedschaft" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="price" class="form-label">Preis (€)</label>
+                                        <input type="number" id="price" name="price" class="form-control" placeholder="9.99" step="0.01" min="0.00" required>
+                                    </div>
+                                    <div class="form-group" style="grid-column: span 2;">
+                                        <label for="description" class="form-label">Beschreibung</label>
+                                        <textarea id="description" name="description" class="form-control" rows="3" placeholder="Beschreibe dein Produkt..." required></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="roleId" class="form-label"><i class="fas fa-user-tag"></i> Discord Rolle ID (optional)</label>
+                                        <input type="text" id="roleId" name="roleId" class="form-control" placeholder="123456789012345678">
+                                        <div class="form-text"><i class="fas fa-info-circle"></i> Diese Rolle wird automatisch nach dem Kauf zugewiesen.</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="imageFile" class="form-label"><i class="fas fa-image"></i> Produkt-Bild hochladen (optional)</label>
+                                        <input type="file" id="imageFile" name="imageFile" class="form-control" accept="image/*">
+                                        <div class="form-text"><i class="fas fa-info-circle"></i> Lade ein Produktbild hoch (idealerweise 16:9 Format).</div>
+                                    </div>
+                                    <div class="form-group" style="grid-column: span 2;">
+                                        <button type="submit" class="btn-action" style="width: 100%; padding: 0.75rem;">
+                                            <i class="fas fa-plus"></i> Produkt hinzufügen
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <!-- Orders Tab (nur einmal!) -->
+                        <div class="tab-content" id="orders-tab">
+                            <h2 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.5rem;">Bestellungen</h2>
+                            <% if (orders.length > 0) { %>
+                                <div class="table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Produkt</th>
+                                                <th>Kunde</th>
+                                                <th>Status</th>
+                                                <th>Bezahlt</th>
+                                                <th>Datum</th>
+                                                <th>Aktionen</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% orders.forEach(order => { %>
+                                                <tr>
+                                                    <td><%= order._id.toString().slice(-6) %></td>
+                                                    <td><%= order.productId && order.productId.name ? order.productId.name : 'Unbekannt' %></td>
+                                                    <td><%= order.userId %></td>
+                                                    <td>
+                                                        <% if (order.status === 'pending') { %>
+                                                            <span class="status-indicator" style="background-color: rgba(245, 158, 11, 0.2); color: var(--warning-color); font-size: 0.75rem; padding: 0.25rem 0.5rem;">Ausstehend</span>
+                                                        <% } else if (order.status === 'paid') { %>
+                                                            <span class="status-indicator" style="background-color: rgba(16, 185, 129, 0.2); color: var(--success-color); font-size: 0.75rem; padding: 0.25rem 0.5rem;">Bezahlt</span>
+                                                        <% } else if (order.status === 'completed') { %>
+                                                            <span class="status-indicator" style="background-color: rgba(99, 102, 241, 0.2); color: var(--primary-color); font-size: 0.75rem; padding: 0.25rem 0.5rem;">Abgeschlossen</span>
+                                                        <% } else if (order.status === 'cancelled') { %>
+                                                            <span class="status-indicator" style="background-color: rgba(239, 68, 68, 0.2); color: var(--danger-color); font-size: 0.75rem; padding: 0.25rem 0.5rem;">Storniert</span>
+                                                        <% } %>
+                                                    </td>
+                                                    <td><%= order.paid ? '✅' : '❌' %></td>
+                                                    <td><%= new Date(order.createdAt).toLocaleString('de-DE') %></td>
+                                                    <td>
+                                                        <div style="display: flex; gap: 0.5rem;">
+                                                            <button class="btn-action" style="padding: 0.35rem 0.5rem; font-size: 0.8rem;">
+                                                                <i class="fas fa-eye"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <% }) %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <% } else { %>
+                                <div class="empty-state">
+                                    <i class="fas fa-clipboard-list"></i>
+                                    <h3>Keine Bestellungen</h3>
+                                    <p>Es wurden noch keine Bestellungen aufgegeben.</p>
+                                </div>
+                            <% } %>
+                        </div>
+                        <!-- PayPal Orders Tab -->
+                        <div class="tab-content" id="paypal-orders-tab">
+                            <h2 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.5rem; color:#009cde;"><i class="fab fa-paypal"></i> PayPal-Bestellungen (Geld gesendet)</h2>
+                            <% const paypalOrders = orders.filter(order => order.paymentMethod === 'paypal' && order.status === 'paypal_pending'); %>
+                            <% if (paypalOrders.length > 0) { %>
+                                <div class="table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Produkt</th>
+                                                <th>Kunde</th>
+                                                <th>Betrag</th>
+                                                <th>Datum</th>
+                                                <th>Aktion</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% paypalOrders.forEach(order => { %>
+                                                <tr>
+                                                    <td><%= order._id.toString().slice(-6) %></td>
+                                                    <td><%= order.productId.name %></td>
+                                                    <td><%= order.userId %></td>
+                                                    <td>€<%= order.amount.toFixed(2) %></td>
+                                                    <td><%= new Date(order.createdAt).toLocaleString('de-DE') %></td>
+                                                    <td>
+                                                        <form method="POST" action="/dashboard/guild/<%= guild.id %>/order/<%= order._id %>/approve" style="display:inline;">
+                                                            <button type="submit" class="btn-action" style="background:#22c55e;color:#fff;">
+                                                                <i class="fas fa-check"></i> Approve
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            <% }) %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <% } else { %>
+                                <div class="empty-state">
+                                    <i class="fab fa-paypal"></i>
+                                    <h3>Keine PayPal-Bestellungen</h3>
+                                    <p>Es sind aktuell keine PayPal-Bestellungen zur Bestätigung offen.</p>
+                                </div>
+                            <% } %>
+                        </div>
+                        <!-- Settings Tab (nur einmal!) -->
+                        <div class="tab-content" id="settings-tab">
+                            <h2 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.5rem;">Shopeinstellungen</h2>
+                            <form method="POST" action="/dashboard/guild/<%= guild.id %>/settings" class="form-grid">
+                                <div class="form-group">
+                                    <label for="shopName" class="form-label"><i class="fas fa-store"></i> Shop-Name</label>
+                                    <input type="text" id="shopName" name="shopName" class="form-control" value="<%= client.config.shopName || '' %>" placeholder="Mein Discord Shop">
+                                </div>
+                                <div class="form-group">
+                                    <label for="shopSlug" class="form-label"><i class="fas fa-link"></i> Shop-URL</label>
+                                    <div class="shop-url-container">
+                                        <span class="shop-url-prefix">https://domain.de/shop/</span>
+                                        <input type="text" id="shopSlug" name="shopSlug" class="form-control" value="<%= client.shopSlug || '' %>" placeholder="<%= guild.id %>" oninput="checkShopSlug()">
+                                    </div>
+                                    <div id="shopSlugError" class="form-text" style="color:#ef4444;display:none;"><i class="fas fa-exclamation-triangle"></i> Dieser Shop-Slug ist bereits vergeben!</div>
+                                    <div class="form-text"><i class="fas fa-info-circle"></i> Dies ist die öffentliche URL deines Shops.</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="paypalLink" class="form-label"><i class="fab fa-paypal"></i> PayPal E-Mail</label>
+                                    <input type="text" id="paypalLink" name="paypalLink" class="form-control" value="<%= client.config.paypalLink || '' %>" placeholder="deine@email.de">
+                                    <div class="form-text"><i class="fas fa-info-circle"></i> Füge deine PayPal-E-Mail-Adresse hinzu, um PayPal-Zahlungen zu akzeptieren.</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="nowPaymentsKey" class="form-label"><i class="fab fa-bitcoin"></i> NowPayments API-Key</label>
+                                    <input type="password" id="nowPaymentsKey" name="nowPaymentsKey" class="form-control" value="<%= client.config.nowPaymentsKey || '' %>" placeholder="Dein NowPayments API-Key">
+                                    <div class="form-text"><i class="fas fa-info-circle"></i> Füge deinen NowPayments API-Key hinzu, um Krypto-Zahlungen zu akzeptieren.</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminChannelId" class="form-label"><i class="fas fa-hashtag"></i> Admin-Channel ID</label>
+                                    <input type="text" id="adminChannelId" name="adminChannelId" class="form-control" value="<%= client.config.adminChannelId || '' %>" placeholder="123456789012345678">
+                                    <div class="form-text"><i class="fas fa-info-circle"></i> Channel-ID, in dem der Bot Admin-Benachrichtigungen senden soll.</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="supportRoleId" class="form-label"><i class="fas fa-headset"></i> Support-Rolle ID</label>
+                                    <input type="text" id="supportRoleId" name="supportRoleId" class="form-control" value="<%= client.config.supportRoleId || '' %>" placeholder="123456789012345678">
+                                    <div class="form-text"><i class="fas fa-info-circle"></i> Rolle-ID für Support-Mitarbeiter, die Tickets sehen können.</div>
+                                </div>
+                                <div class="form-group" style="grid-column: span 2;">
+                                    <button type="submit" class="btn-action" style="width: 100%;">
+                                        <i class="fas fa-save"></i> Einstellungen speichern
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Sidebar (nur Status und Schnellaktionen) -->
+            <div class="sidebar">
+                <!-- Bot Status Widget -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-robot"></i> Bot Status
+                        </div>
+                    </div>
+                    <div class="widget-body">
+                        <div class="bot-status-header">
+                            <div class="status-indicator online">
+                                <i class="fas fa-circle"></i> Online
+                            </div>
+                            <div class="ping-info">Ping: 23ms</div>
+                        </div>
+                        <div class="server-stat">
+                            <div class="server-stat-label">Alle Ressourcen</div>
+                            <div class="server-stat-value">
+                                <span class="server-stat-number"><%= allResourcesCount %></span>
+                            </div>
+                        </div>
+                        <div class="server-stat">
+                            <div class="server-stat-label">Ausstehende Bestellungen</div>
+                            <div class="server-stat-value">
+                                <span class="server-stat-number"><%= orders.filter(o => o.status === 'pending').length %></span>
+                                <span class="server-stat-meta">von <%= orders.length %></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Quick Actions Widget -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-bolt"></i> Schnellaktionen
+                        </div>
+                    </div>
+                    <div class="widget-body">
+                        <div class="actions-grid">
+                            <a href="/dashboard/guild/<%= guild.id %>/wallet" class="btn-action wallet-action" style="display:flex;align-items:center;gap:0.5rem;">
+                                <i class="fas fa-wallet"></i> Wallet verwalten
+                            </a>
+                            <button class="btn-action" onclick="document.querySelector('.sub-tab[data-subtab=\'product-create\']').click()">
+                                <i class="fas fa-plus"></i> Produkt erstellen
+                            </button>
+                            <a href="/shop/<%= client.shopSlug %>" target="_blank" class="btn-action">
+                                <i class="fas fa-eye"></i>
+                                <span>Shop<br>anzeigen</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Produkt-Bearbeitungsmodal -->
+    <div id="productEditModal" class="modal-backdrop" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Produkt bearbeiten</h2>
+                <button class="modal-close" onclick="closeProductEditModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="productEditForm" onsubmit="return saveProductEdit(event)" enctype="multipart/form-data">
+                <input type="hidden" name="productId" id="editProductId">
+                <div class="form-group">
+                    <label for="editProductName">Name</label>
+                    <input class="form-control" id="editProductName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="editProductDescription">Beschreibung</label>
+                    <textarea class="form-control" id="editProductDescription" name="description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editProductPrice">Preis (€)</label>
+                    <input class="form-control" id="editProductPrice" name="price" type="number" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editProductImageFile">Bild hochladen (optional)</label>
+                    <input class="form-control" id="editProductImageFile" name="imageFile" type="file" accept="image/*">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeProductEditModal()">Abbrechen</button>
+                    <button type="submit" class="btn btn-primary">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <style>
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.55);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+        }
+        .modal {
+            background: var(--bg-card, #181f2a);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            padding: 2.5rem 2rem 1.5rem 2rem;
+            min-width: 340px;
+            max-width: 98vw;
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            animation: modalIn 0.2s cubic-bezier(.4,2,.6,1) 1;
+        }
+        @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+        .modal-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-primary, #fff);
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary, #aaa);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .modal-close:hover { color: var(--danger-color, #ef4444); }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .btn.btn-primary {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.7rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn.btn-primary:hover {
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        }
+        .btn.btn-secondary {
+            background: var(--input-bg, #23272f);
+            color: var(--text-secondary, #aaa);
+            border: 1px solid var(--border-color, #6366f1);
+            border-radius: 8px;
+            padding: 0.7rem 1.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn.btn-secondary:hover {
+            background: #23272f;
+            color: var(--primary-color);
+        }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; margin-bottom: 0.3rem; color: var(--text-secondary, #aaa); font-size: 0.97rem; }
+        .form-control { width: 100%; padding: 0.7rem 1rem; border-radius: 8px; border: 1px solid var(--border-color, #6366f1); background: var(--input-bg, #23272f); color: var(--text-primary, #fff); font-size: 1rem; }
+        .form-control:focus { outline: none; border-color: var(--primary-color, #6366f1); }
+        .wallet-addresses {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        .wallet-item {
+            background: rgba(31, 41, 55, 0.5);
+            border-radius: 8px;
+            padding: 0.8rem;
+            border: 1px solid var(--border-color);
+        }
+        .wallet-item .currency {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .address-container {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .wallet-address {
+            flex: 1;
+            background: rgba(17, 24, 39, 0.7);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .copy-btn {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: var(--primary-color);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .copy-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        .edit-wallet-btn {
+            margin-top: 0.5rem;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 0.7rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+        .edit-wallet-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+        .wallet-action {
+            text-decoration: none !important;
+            border-bottom: none !important;
+        }
+        .notify-badge {
+            position: absolute;
+            top: 7px;
+            right: 12px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.85em;
+            font-weight: 700;
+            border-radius: 50%;
+            padding: 0.18em 0.55em;
+            min-width: 1.5em;
+            text-align: center;
+            box-shadow: 0 2px 8px #ef444488;
+            z-index: 2;
+            line-height: 1.2;
+        }
+    </style>
+
+    <script>
+        // Tab functionality
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+        
+        // Edit product functionality
+        function editProduct(productId) {
+            window.location.href = `/dashboard/guild/<%= guild.id %>/product/${productId}/edit`;
+        }
+
+        function openProductEditModal(productId) {
+            // Modal anzeigen
+            document.getElementById('productEditModal').style.display = 'flex';
+            // Felder leeren
+            document.getElementById('productEditForm').reset();
+            // Daten laden
+            fetch(`/api/product/${productId}`)
+                .then(res => res.json())
+                .then(product => {
+                    document.getElementById('editProductId').value = product._id;
+                    document.getElementById('editProductName').value = product.name;
+                    document.getElementById('editProductDescription').value = product.description;
+                    document.getElementById('editProductPrice').value = product.price;
+                });
+        }
+
+        function closeProductEditModal() {
+            document.getElementById('productEditModal').style.display = 'none';
+        }
+
+        async function saveProductEdit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const productId = form.productId.value;
+            const data = {
+                name: form.name.value,
+                description: form.description.value,
+                price: form.price.value,
+                imageFile: form.imageFile.files[0]
+            };
+            const res = await fetch(`/dashboard/guild/<%= guild.id %>/product/${productId}/edit`, {
+                method: 'POST',
+                body: new FormData(form)
+            });
+            if (res.ok) {
+                closeProductEditModal();
+                showNotification('Erfolg', 'Produkt gespeichert!', 'success');
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                showNotification('Fehler', 'Produkt konnte nicht gespeichert werden.', 'error');
+            }
+            return false;
+        }
+        
+        // Notification system
+        function showNotification(title, message, type = 'info') {
+            // Remove any existing notifications
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                document.body.removeChild(existingNotification);
+            }
+            
+            // Create new notification
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            // Icon based on notification type
+            let icon = 'fa-info-circle';
+            if (type === 'success') icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-exclamation-circle';
+            
+            notification.innerHTML = `
+                <div class="notification-icon">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${title}</div>
+                    <div class="notification-message">${message}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Sub-Tab Umschaltung für Produkte
+        const subTabs = document.querySelectorAll('.sub-tab');
+        const subTabContents = document.querySelectorAll('.sub-tab-content');
+        subTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                subTabs.forEach(t => t.classList.remove('sub-tab-active'));
+                tab.classList.add('sub-tab-active');
+                const target = tab.getAttribute('data-subtab');
+                subTabContents.forEach(c => c.style.display = 'none');
+                document.getElementById(target).style.display = 'block';
+            });
+        });
+
+        function copyAddress(button) {
+            const input = button.parentElement.querySelector('.wallet-address');
+            input.select();
+            document.execCommand('copy');
+            
+            // Visual feedback
+            const icon = button.querySelector('i');
+            const originalClass = icon.className;
+            icon.className = 'fas fa-check';
+            button.style.background = '#22c55e';
+            button.style.color = 'white';
+            
+            setTimeout(() => {
+                icon.className = originalClass;
+                button.style.background = '';
+                button.style.color = '';
+            }, 1000);
+        }
+
+        function editWalletAddresses() {
+            // Create modal for editing
+            const modal = document.createElement('div');
+            modal.className = 'modal-backdrop';
+            modal.innerHTML = `
+                <div class="modal" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h2>Wallet Adressen bearbeiten</h2>
+                        <button class="modal-close" onclick="this.closest('.modal-backdrop').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-content">
+                        <div class="form-group">
+                            <label>Bitcoin Adresse</label>
+                            <input type="text" id="btcAddress" class="form-control" 
+                                   value="<%= client.config.btcAddress || '' %>">
+                        </div>
+                        <div class="form-group">
+                            <label>Ethereum Adresse</label>
+                            <input type="text" id="ethAddress" class="form-control" 
+                                   value="<%= client.config.ethAddress || '' %>">
+                        </div>
+                        <div class="form-group">
+                            <label>Solana Adresse</label>
+                            <input type="text" id="solAddress" class="form-control" 
+                                   value="<%= client.config.solAddress || '' %>">
+                        </div>
+                        <div class="form-group">
+                            <label>Litecoin Adresse</label>
+                            <input type="text" id="ltcAddress" class="form-control" 
+                                   value="<%= client.config.ltcAddress || '' %>">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-backdrop').remove()">
+                            Abbrechen
+                        </button>
+                        <button class="btn btn-primary" onclick="saveWalletAddresses(this)">
+                            Speichern
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+
+        async function saveWalletAddresses(button) {
+            const modal = button.closest('.modal-backdrop');
+            const data = {
+                btcAddress: document.getElementById('btcAddress').value,
+                ethAddress: document.getElementById('ethAddress').value,
+                solAddress: document.getElementById('solAddress').value,
+                ltcAddress: document.getElementById('ltcAddress').value
+            };
+
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Speichern...';
+
+                const response = await fetch('/dashboard/guild/<%= client.shopSlug %>/config/wallet', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showNotification('Erfolg', 'Wallet Adressen wurden gespeichert', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    throw new Error('Fehler beim Speichern');
+                }
+            } catch (error) {
+                showNotification('Fehler', 'Wallet Adressen konnten nicht gespeichert werden', 'error');
+                button.disabled = false;
+                button.innerHTML = 'Speichern';
+            }
+        }
+
+        function checkShopSlug() {
+            const input = document.getElementById('shopSlug');
+            const error = document.getElementById('shopSlugError');
+            const saveBtn = document.querySelector('button[type="submit"]');
+            fetch('/dashboard/check-shop-slug', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ shopSlug: input.value, guildId: '<%= guild.id %>' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.taken) {
+                    error.style.display = '';
+                    saveBtn.disabled = true;
+                } else {
+                    error.style.display = 'none';
+                    saveBtn.disabled = false;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

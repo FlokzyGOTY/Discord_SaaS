@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ressourcen - <%= guild.name %></title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/dashboard.css">
+</head>
+<body>
+    <div class="background">
+        <div class="bg-grid"></div>
+        <div class="bg-glow"></div>
+        <div class="bg-glow"></div>
+    </div>
+    <header>
+        <a href="/dashboard" class="logo"><span>OrderBot</span></a>
+    </header>
+    <main>
+        <div class="dashboard-container">
+            <div class="main-content">
+                <h1><i class="fas fa-database"></i> Ressourcen</h1>
+                <p class="subtitle">Verwalte alle Keys, Accounts und Dateien für die Produkte dieses Servers.</p>
+                <div class="actions-bar" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 2rem;">
+                    <button class="btn-action" onclick="document.getElementById('addResourceModal').style.display='flex'">
+                        <i class="fas fa-plus"></i> Ressource hinzufügen
+                    </button>
+                    <select id="productFilter" class="form-control" style="max-width: 220px;" onchange="filterByProduct()">
+                        <option value="">Alle Produkte</option>
+                        <% products.forEach(product => { %>
+                            <option value="<%= product._id %>"><%= product.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <% if (resources.length > 0) { %>
+                    <div class="table-container" style="margin-bottom: 2rem;">
+                        <% let grouped = {};
+                           resources.forEach(r => {
+                             if (!grouped[r.productId?._id]) grouped[r.productId?._id] = [];
+                             grouped[r.productId?._id].push(r);
+                           });
+                        %>
+                        <% Object.keys(grouped).forEach(pid => { %>
+                            <div class="resource-group" data-product-id="<%= pid %>">
+                                <h3 style="margin-bottom:0.5rem; color:#a5b4fc; display:flex; align-items:center; gap:0.5rem;">
+                                    <i class="fas fa-box"></i> <%= grouped[pid][0].productId ? grouped[pid][0].productId.name : 'Unbekanntes Produkt' %>
+                                </h3>
+                                <div class="resource-list">
+                                        <% grouped[pid].forEach(resource => { %>
+                                    <div class="resource-row">
+                                        <div class="resource-type">
+                                            <% if(resource.type === 'key') { %><i class="fas fa-key" style="color:#60a5fa;"></i><% } %>
+                                            <% if(resource.type === 'account') { %><i class="fas fa-user" style="color:#fbbf24;"></i><% } %>
+                                            <% if(resource.type === 'file') { %><i class="fas fa-file" style="color:#a78bfa;"></i><% } %>
+                                                    <%= resource.type %>
+                                        </div>
+                                        <div class="resource-value">
+                                                    <% if(resource.type === 'file' && resource.fileUrl) { %>
+                                                        <a href="<%= resource.fileUrl %>" target="_blank"><%= resource.value %></a>
+                                                    <% } else { %>
+                                                        <%= resource.value %>
+                                                        <button class="copy-btn" title="Kopieren" onclick="navigator.clipboard.writeText(<%= JSON.stringify(resource.value) %>)"><i class="fas fa-copy"></i></button>
+                                                    <% } %>
+                                        </div>
+                                        <div class="resource-status">
+                                                    <% if(resource.used) { %>
+                                                        <span class="badge badge-danger">Verbraucht</span>
+                                                    <% } else { %>
+                                                        <span class="badge badge-success">Frei</span>
+                                                    <% } %>
+                                        </div>
+                                        <div class="resource-actions">
+                                            <button class="icon-btn edit" title="Bearbeiten" onclick="openEditResourceModal('<%= resource._id %>', '<%= resource.type %>', '<%= resource.value %>')"><i class="fas fa-pen"></i></button>
+                                                    <form method="POST" action="/admin/resource/<%= resource._id %>?_method=DELETE" style="display:inline;">
+                                                <button type="submit" class="icon-btn delete" title="Löschen"><i class="fas fa-trash"></i></button>
+                                                    </form>
+                                        </div>
+                                    </div>
+                                        <% }) %>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <div class="resource-empty">
+                        <i class="fas fa-database"></i>
+                        <h3>Keine Ressourcen vorhanden</h3>
+                        <p>Füge Keys, Accounts oder Dateien für deine Produkte hinzu.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+    <div id="addResourceModal" class="modal-backdrop" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Neue Ressource hinzufügen</h2>
+                <button class="modal-close" onclick="document.getElementById('addResourceModal').style.display='none'"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="addResourceForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="productId">Produkt</label>
+                    <select id="productId" name="productId" class="form-control" required>
+                        <% products.forEach(product => { %>
+                            <option value="<%= product._id %>"><%= product.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="type">Typ</label>
+                    <select id="type" name="type" class="form-control" required onchange="toggleResourceType()">
+                        <option value="key">Key</option>
+                        <option value="account">Account</option>
+                        <option value="file">Datei</option>
+                    </select>
+                </div>
+                <div class="form-group" id="valueGroup">
+                    <label for="value">Werte (Keys/Accounts, jeweils eine Zeile)</label>
+                    <textarea id="value" name="value" class="form-control" rows="5" placeholder="Eintrag pro Zeile, z.B.\nkey1\nkey2\nuser:pass"></textarea>
+                </div>
+                <div class="form-group" id="fileGroup" style="display:none;">
+                    <label for="file">Datei hochladen</label>
+                    <input type="file" id="file" name="file" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-action"><i class="fas fa-plus"></i> Hinzufügen</button>
+                    <button type="button" class="btn-action btn-secondary" onclick="document.getElementById('addResourceModal').style.display='none'">Abbrechen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="productEditModal" class="modal-backdrop" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Produkt bearbeiten</h2>
+                <button class="modal-close" onclick="closeProductEditModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="productEditForm" onsubmit="return saveProductEdit(event)">
+                <input type="hidden" name="productId" id="editProductId">
+                <div class="form-group">
+                    <label for="editProductName">Name</label>
+                    <input class="form-control" id="editProductName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="editProductDescription">Beschreibung</label>
+                    <textarea class="form-control" id="editProductDescription" name="description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editProductPrice">Preis (€)</label>
+                    <input class="form-control" id="editProductPrice" name="price" type="number" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editProductExpressPrice">Express-Preis (optional)</label>
+                    <input class="form-control" id="editProductExpressPrice" name="expressPrice" type="number" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="editProductBannerColor">Banner-Farbe</label>
+                    <input class="form-control" id="editProductBannerColor" name="bannerColor" type="color">
+                </div>
+                <div class="form-group">
+                    <label for="editProductImageUrl">Bild-URL (optional)</label>
+                    <input class="form-control" id="editProductImageUrl" name="imageUrl">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeProductEditModal()">Abbrechen</button>
+                    <button type="submit" class="btn btn-primary">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="editResourceModal" class="modal-backdrop" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Ressource bearbeiten</h2>
+                <button class="modal-close" onclick="closeEditResourceModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="editResourceForm">
+                <input type="hidden" name="resourceId" id="editResourceId">
+                <div class="form-group">
+                    <label for="editResourceType">Typ</label>
+                    <input class="form-control" id="editResourceType" name="type" readonly>
+                </div>
+                <div class="form-group" id="editValueGroup">
+                    <label for="editResourceValue">Wert</label>
+                    <input class="form-control" id="editResourceValue" name="value" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditResourceModal()">Abbrechen</button>
+                    <button type="submit" class="btn btn-primary">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <style>
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.55);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+        }
+        .modal {
+            background: var(--bg-card, #181f2a);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            padding: 2.5rem 2rem 1.5rem 2rem;
+            min-width: 340px;
+            max-width: 98vw;
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            animation: modalIn 0.2s cubic-bezier(.4,2,.6,1) 1;
+        }
+        @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+        .modal-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-primary, #fff);
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary, #aaa);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .modal-close:hover { color: var(--danger-color, #ef4444); }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .btn.btn-primary {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.7rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn.btn-primary:hover {
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        }
+        .btn.btn-secondary {
+            background: var(--input-bg, #23272f);
+            color: var(--text-secondary, #aaa);
+            border: 1px solid var(--border-color, #6366f1);
+            border-radius: 8px;
+            padding: 0.7rem 1.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn.btn-secondary:hover {
+            background: #23272f;
+            color: var(--primary-color);
+        }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; margin-bottom: 0.3rem; color: var(--text-secondary, #aaa); font-size: 0.97rem; }
+        .form-control { width: 100%; padding: 0.7rem 1rem; border-radius: 8px; border: 1px solid var(--border-color, #6366f1); background: var(--input-bg, #23272f); color: var(--text-primary, #fff); font-size: 1rem; }
+        .form-control:focus { outline: none; border-color: var(--primary-color, #6366f1); }
+        .resource-group {
+            background: #181f2a;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+            margin-bottom: 2.5rem;
+            padding: 1.5rem 1.5rem 1rem 1.5rem;
+        }
+        .resource-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+        }
+        .resource-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(31,41,55,0.85);
+            border-radius: 12px;
+            padding: 1.1rem 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: background 0.18s, box-shadow 0.18s;
+            border: 1px solid transparent;
+            gap: 1.2rem;
+        }
+        .resource-row:hover {
+            background: rgba(99,102,241,0.10);
+            border: 1px solid var(--primary-color);
+            box-shadow: 0 4px 16px rgba(99,102,241,0.10);
+        }
+        .resource-type {
+            display: flex; align-items: center; gap: 0.7rem; font-weight: 500; font-size: 1.08rem;
+            min-width: 110px;
+        }
+        .resource-value {
+            display: flex; align-items: center; gap: 0.7rem; font-size: 1.05rem;
+            word-break: break-all;
+        }
+        .copy-btn {
+            border: none;
+            background: rgba(99,102,241,0.13);
+            color: var(--primary-color);
+            border-radius: 6px;
+            padding: 0.25rem 0.6rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s;
+        }
+        .copy-btn:hover {
+            background: var(--primary-color);
+            color: #fff;
+        }
+        .resource-status {
+            min-width: 90px;
+        }
+        .resource-actions {
+            display: flex; gap: 0.5rem;
+        }
+        .icon-btn {
+            border: none;
+            background: none;
+            border-radius: 50%;
+            width: 2.4rem;
+            height: 2.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+            transition: background 0.18s, box-shadow 0.18s, color 0.18s;
+            cursor: pointer;
+            position: relative;
+        }
+        .icon-btn.edit {
+            background: rgba(99,102,241,0.13);
+            color: var(--primary-color);
+        }
+        .icon-btn.edit:hover {
+            background: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.18);
+        }
+        .icon-btn.delete {
+            background: rgba(239,68,68,0.13);
+            color: var(--danger-color);
+        }
+        .icon-btn.delete:hover {
+            background: var(--danger-color);
+            color: #fff;
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.18);
+        }
+        .badge {
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 0.45rem 1.1rem;
+            border-radius: 9999px;
+            box-shadow: 0 2px 8px rgba(16,185,129,0.08);
+            letter-spacing: 0.01em;
+        }
+        .resource-empty {
+            text-align: center;
+            color: #a5b4fc;
+            padding: 2.5rem 1rem 2rem 1rem;
+            opacity: 0.8;
+        }
+        .resource-empty i {
+            font-size: 2.5rem;
+            margin-bottom: 0.7rem;
+            color: var(--primary-color);
+        }
+        @media (max-width: 700px) {
+            .resource-row { flex-direction: column; align-items: flex-start; gap: 0.7rem; padding: 1rem 0.7rem; }
+            .resource-type, .resource-value, .resource-status, .resource-actions { min-width: unset; }
+        }
+        .data-table, .data-table th, .data-table td { display: none !important; }
+        /* Tooltip */
+        .icon-btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            left: 50%;
+            top: 110%;
+            transform: translateX(-50%);
+            background: #23272f;
+            color: #fff;
+            padding: 0.35rem 0.7rem;
+            border-radius: 6px;
+            font-size: 0.93rem;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+            z-index: 10;
+            pointer-events: none;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script>
+        function toggleResourceType() {
+            var type = document.getElementById('type').value;
+            document.getElementById('valueGroup').style.display = (type === 'file') ? 'none' : 'block';
+            document.getElementById('fileGroup').style.display = (type === 'file') ? 'block' : 'none';
+        }
+        function editProduct(productId) {
+            window.location.href = `/dashboard/guild/<%= guild.id %>/product/${productId}/edit`;
+        }
+        function openProductEditModal(productId) {
+            document.getElementById('productEditModal').style.display = 'flex';
+            document.getElementById('productEditForm').reset();
+            fetch(`/api/product/${productId}`)
+                .then(res => res.json())
+                .then(product => {
+                    document.getElementById('editProductId').value = product._id;
+                    document.getElementById('editProductName').value = product.name;
+                    document.getElementById('editProductDescription').value = product.description;
+                    document.getElementById('editProductPrice').value = product.price;
+                    document.getElementById('editProductExpressPrice').value = product.expressPrice || '';
+                    document.getElementById('editProductBannerColor').value = product.bannerColor || '#6366f1';
+                    document.getElementById('editProductImageUrl').value = product.imageUrl || '';
+                });
+        }
+        function closeProductEditModal() {
+            document.getElementById('productEditModal').style.display = 'none';
+        }
+        async function saveProductEdit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const productId = form.productId.value;
+            const data = {
+                name: form.name.value,
+                description: form.description.value,
+                price: form.price.value,
+                expressPrice: form.expressPrice.value,
+                bannerColor: form.bannerColor.value,
+                imageUrl: form.imageUrl.value
+            };
+            const res = await fetch(`/dashboard/guild/<%= guild.id %>/product/${productId}/edit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                closeProductEditModal();
+                showNotification('Erfolg', 'Produkt gespeichert!', 'success');
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                showNotification('Fehler', 'Produkt konnte nicht gespeichert werden.', 'error');
+            }
+            return false;
+        }
+        function filterByProduct() {
+            var filter = document.getElementById('productFilter').value;
+            document.querySelectorAll('.resource-group').forEach(function(group) {
+                if (!filter || group.getAttribute('data-product-id') === filter) {
+                    group.style.display = '';
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+        }
+        document.getElementById('addResourceForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const productId = form.productId.value;
+            const type = form.type.value;
+
+            if (type === 'file') {
+                // Datei-Upload
+                const fd = new FormData(form);
+                const res = await fetch(`/admin/product/${productId}/resource/file`, {
+                    method: 'POST',
+                    body: fd
+                });
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    alert('Fehler beim Hochladen der Datei');
+                }
+            } else {
+                // Keys/Accounts (mehrere Zeilen)
+                const values = form.value.value.split('\n').map(v => v.trim()).filter(Boolean);
+                const res = await fetch(`/admin/product/${productId}/resource`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, values })
+                });
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    alert('Fehler beim Hinzufügen der Ressourcen');
+                }
+            }
+        };
+        function openEditResourceModal(id, type, value) {
+            document.getElementById('editResourceModal').style.display = 'flex';
+            document.getElementById('editResourceId').value = id;
+            document.getElementById('editResourceType').value = type;
+            document.getElementById('editResourceValue').value = value;
+        }
+        function closeEditResourceModal() {
+            document.getElementById('editResourceModal').style.display = 'none';
+        }
+        document.getElementById('editResourceForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editResourceId').value;
+            const value = document.getElementById('editResourceValue').value;
+            const type = document.getElementById('editResourceType').value;
+            const res = await fetch(`/admin/resource/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value, type })
+            });
+            if (res.ok) {
+                closeEditResourceModal();
+                location.reload();
+            } else {
+                alert('Fehler beim Bearbeiten der Ressource');
+            }
+        };
+        // AJAX-Delete für Ressourcen
+        function setupResourceDelete() {
+            document.querySelectorAll('.resource-actions form').forEach(form => {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    if (!confirm('Wirklich löschen?')) return;
+                    const btn = form.querySelector('.icon-btn.delete');
+                    const url = form.action;
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: '_method=DELETE'
+                    });
+                    if (res.ok) {
+                        // Zeile entfernen
+                        form.closest('.resource-row').remove();
+                        showNotification('Erfolg', 'Ressource gelöscht!', 'success');
+                    } else {
+                        showNotification('Fehler', 'Konnte nicht gelöscht werden.', 'error');
+                    }
+                });
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setupResourceDelete);
+    </script>
+</body>
+</html> 
