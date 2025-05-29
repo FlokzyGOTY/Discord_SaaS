@@ -38,4 +38,12 @@ Pull Requests, Issues und Ideen sind willkommen! Das Ziel ist ein modernes, flex
 Dieses Projekt ist ein Work-in-Progress, aber nicht mehr in aktiver Entwicklung. Es kann als Basis, Inspiration oder für eigene Projekte genutzt werden!
 
 **Sprache:**
-Das System und die Oberfläche sind grundsätzlich nur in deutscher Sprache gehalten. 
+Das System und die Oberfläche sind grundsätzlich nur in deutscher Sprache gehalten.
+
+**Unterstützung:**
+
+Wenn dir dieses Projekt gefällt oder du meine Arbeit unterstützen möchtest, kannst du mir gerne eine kleine Spende via PayPal senden:
+
+**PayPal:** franceacc1234@gmail.com
+
+Vielen Dank für deine Unterstützung! 
